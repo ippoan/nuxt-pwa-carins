@@ -1,0 +1,5 @@
+name = "staging-nuxt-pwa-carins"
+pages_build_output_dir="./dist"
+
+
+[env.preview]
