@@ -3,11 +3,12 @@
 </script>
 
 <template>
-  <div>
+  <div class="grid-row-3">
 
     <NuxtPwaManifest />
     <NuxtLoadingIndicator />
-    <Login/>
+    <Login />
+    <List />
     <!-- <NuxtRouteAnnouncer />
     <NuxtWelcome /> -->
   </div>

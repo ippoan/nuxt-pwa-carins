@@ -1,10 +1,19 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
+console.log("env.PWA_TITLE",process.env.PWA_TITLE)
+console.log("env.NUXT_CF_SERVER",process.env.stage=="preview"?process.env.NUXT_CF_SERVER_PREVIEW:process.env.NUXT_CF_SERVER_PRODUCT)
+const appName=process.env.stage=="preview"?'ST車検証送信アプリ':'車検証送信アプリ'
 export default defineNuxtConfig({
   compatibilityDate: '2024-11-01',
   devtools: { enabled: true },
   // ssr: false,
+  
+  // ssr:  true,
+  // target: "static",
   nitro:{
-    preset:"cloudflare-pages"
+    // preset:"cloudflare-pages",
+    prerender: {
+      autoSubfolderIndex: false
+    }
   },
   devServer: {
     host: '0.0.0.0',
@@ -18,7 +27,8 @@ export default defineNuxtConfig({
   },
   runtimeConfig: {
     cfId: "",
-    cfSecret: ""
+    cfSecret: "",
+    cfServer: process.env.stage=="preview"?process.env.NUXT_CF_SERVER_PREVIEW:process.env.NUXT_CF_SERVER_PRODUCT
   },
 
   vite: {
@@ -58,17 +68,31 @@ export default defineNuxtConfig({
       ],
     },
   },
+  apiParty: {
+    endpoints: {
+      jsonPlaceholder: {
+        url: `${process.env.NUXT_HONO_LOGI_URL}`,
+        schema: `${process.env.NUXT_HONO_LOGI_SCHEMA}`,
+        // Global headers sent with each request
+        headers: {
+          "CF-Access-Client-Id": `${process.env.CF_ACCESS_CLIENT_ID!}`,
+          "CF-Access-Client-Secret":`${process.env.CF_ACCESS_CLIENT_SECRET}`
+        }
+      }
+    }
+  },
+
 
   pwa: {
     client: { installPrompt: true },
     registerType: "autoUpdate", // 多分なくてもよい
 
     manifest: {
-      name: '車検証送信アプリ',
+      name: appName,
       description: "アプリ説明",
       theme_color: "#326CB3", // テーマカラー
       lang: "ja",
-      short_name: "車検証アプリ",
+      short_name: appName,
       start_url: "/",
       display: "standalone",
       background_color: "#ffffff",
@@ -138,5 +162,5 @@ export default defineNuxtConfig({
     },
 
   },
-  modules: ["@vite-pwa/nuxt", "@vueuse/nuxt", "@nuxt/ui"],
+  modules: ["@vite-pwa/nuxt", "@vueuse/nuxt", "@nuxt/ui","nuxt-api-party"],
 })

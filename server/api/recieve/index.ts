@@ -13,13 +13,14 @@ export default defineEventHandler(async (event) => {
         }
         console.log("multi:", multi)
         console.log(sendData)
-        const { cfId, cfSecret } = useRuntimeConfig(event)
+        const { cfId, cfSecret,cfServer } = useRuntimeConfig(event)
         console.log("NUXT_CF_ID:", cfId)
         console.log("NUXT_CF_ID:", cfSecret)
         // console.log("JSON:", JSON.stringify(sendData))
         try{
 
-            const res: any = await $fetch("https://staging.hono-logi.mtamaramu.com/api/files", {
+            // const res: any = await $fetch("https://staging.hono-logi.mtamaramu.com/api/files", {
+            const res: any = await $fetch(cfServer, {
                 method: "post",
                 // data: JSON.stringify(sendData),
                 body: JSON.stringify(sendData),

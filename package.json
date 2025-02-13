@@ -6,7 +6,9 @@
     "build": "nuxt build",
     "dev": "nuxt dev",
     "generate": "nuxt generate",
-    "preview": "nuxt preview",
+    "preview": "PWA_TITLE=staging stage=preview nuxt build && wrangler pages deploy dist/ --branch preview",
+    "publish": "nuxt build && wrangler pages deploy dist/ --branch production",
+    "deploy":"NITRO_PRESET=cloudflare_module nuxt build && wrangler deploy",
     "postinstall": "nuxt prepare"
   },
   "dependencies": {
@@ -14,6 +16,9 @@
     "@vueuse/core": "^12.3.0",
     "@vueuse/nuxt": "^12.3.0",
     "nuxt": "^3.15.1",
+    "nuxt-api-party": "2.1.2",
+    "openapi-typescript": "^5 || ^6 || ^7",
+    "typescript": "^5.7.3",
     "vue": "latest",
     "vue-router": "latest"
   },
