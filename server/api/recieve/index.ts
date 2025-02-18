@@ -3,21 +3,23 @@ export default defineEventHandler(async (event) => {
     const ap = await readMultipartFormData(event)
     if (ap != undefined) {
         const multi = ap[0]
+        // console.log(multi)
         const blob = Buffer.from(multi["data"]).toString("base64")
-        console.log("ap:",ap)
+        // console.log("ap:", ap)
         // multi["blob"]=
         const sendData = {
             blob: blob,
             filename: multi.filename,
             type: multi.type,
         }
-        console.log("multi:", multi)
-        console.log(sendData)
-        const { cfId, cfSecret,cfServer } = useRuntimeConfig(event)
-        console.log("NUXT_CF_ID:", cfId)
-        console.log("NUXT_CF_ID:", cfSecret)
+        console.log("multi:", multi.filename)
+        // console.log(sendData)
+        const { cfId, cfSecret, cfServer } = useRuntimeConfig(event)
+        // console.log("NUXT_CF_ID:", cfId)
+        // console.log("NUXT_CF_ID:", cfSecret)
+        // console.log("cfServer:", cfServer)
         // console.log("JSON:", JSON.stringify(sendData))
-        try{
+        try {
 
             // const res: any = await $fetch("https://staging.hono-logi.mtamaramu.com/api/files", {
             const res: any = await $fetch(cfServer, {
@@ -30,23 +32,46 @@ export default defineEventHandler(async (event) => {
                     "Content-Type": "application/json"
                 },
             })
-            console.log("res:", JSON.stringify(res))
+            // let res: any
+            // event.waitUntil(
+            //     $fetch(cfServer, {
+            //         method: "post",
+            //         // data: JSON.stringify(sendData),
+            //         body: JSON.stringify(sendData),
+            //         headers: {
+            //             "CF-Access-Client-Id": cfId,
+            //             "CF-Access-Client-Secret": cfSecret,
+            //             "Content-Type": "application/json"
+            //         },
+            //     })
+
+            // )
+            console.log("atf post")
+            // console.log("res:", JSON.stringify(res))
             // if(multi?.from){
 
             // }
-            if(1 in ap && ap[1].name=="from" &&ap[1].data.toString()=="front"){
-                return {uuid:res.uuid,message:"送信完了しました"}
-            }else{
-
-                await sendRedirect(event, "/?uuid="+res.uuid    +"&message="+encodeURIComponent("送信完了しました"), 302)
+            if (1 in ap && ap[1].name == "from" && ap[1].data.toString() == "front") {
+                console.log("送信完了しました")
+                return { uuid: "", message: "送信完了しました" }
+            } else {
+                // if(m)
+                console.log(multi)
+                console.log("送信完了しました2")
+                // await sendRedirect(event, "/?message=" + encodeURIComponent("送信完了しました"), 302)
+                
+                return { uuid: "", message: "送信完了しました" }
+                // await sendRedirect(event, "/?uuid=" + res.uuid + "&message=" + encodeURIComponent("送信完了しました"), 302)
             }
             // await sendRedirect(event, "/?uuid=" + res.uuid, 302)
-        }catch(e){
-            await sendRedirect(event, "/?message="+encodeURIComponent("失敗しました"), 302)
+        } catch (e) {
+            console.log("失敗しました 302")
+            console.log(JSON.stringify(e))
+            await sendRedirect(event, "/?message=" + encodeURIComponent("失敗しました"), 302)
         }
-    }else{
+    } else {
         console.log("ap undefined")
-        await sendRedirect(event, "/?message="+encodeURIComponent("失敗しました"), 302)
+        await sendRedirect(event, "/?message=" + encodeURIComponent("失敗しました"), 302)
     }
     // re
     // const name = getRouterParam(event, 'name')

@@ -26,9 +26,9 @@ export default defineNuxtConfig({
     // url:"https://uriage.ohishiunyusouko.com"
   },
   runtimeConfig: {
-    cfId: "",
-    cfSecret: "",
-    cfServer: process.env.stage=="preview"?process.env.NUXT_CF_SERVER_PREVIEW:process.env.NUXT_CF_SERVER_PRODUCT
+    cfId: process.env.NUXT_CF_ID,
+    cfSecret: process.env.NUXT_CF_SECRET,
+    cfServer: process.env.NUXT_CF_SERVER
   },
 
   vite: {

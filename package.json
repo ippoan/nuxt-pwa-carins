@@ -9,6 +9,7 @@
     "preview": "PWA_TITLE=staging stage=preview nuxt build && wrangler pages deploy dist/ --branch preview",
     "publish": "nuxt build && wrangler pages deploy dist/ --branch production",
     "deploy":"NITRO_PRESET=cloudflare_module nuxt build && wrangler deploy",
+    "deployWatch":"NITRO_PRESET=cloudflare_module nuxt build && wrangler deploy && wrangler tail nuxt-pwa-carins",
     "postinstall": "nuxt prepare"
   },
   "dependencies": {
