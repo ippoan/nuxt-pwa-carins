@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "build": "nuxt build",
-    "dev": "nuxt dev",
+    "dev": "nuxt dev --tunnel",
     "generate": "nuxt generate",
     "preview": "PWA_TITLE=staging stage=preview nuxt build && wrangler pages deploy dist/ --branch preview",
     "publish": "nuxt build && wrangler pages deploy dist/ --branch production",

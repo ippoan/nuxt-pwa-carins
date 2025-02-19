@@ -43,8 +43,8 @@
                         },
                         td: {
 
-                            base: 'border-l border-l-black last:border-r last:border-r-black',
-                            padding: 'px-1 py-0'
+                            base: 'border-l border-l-black last:border-r last:border-r-black ',
+                            padding: 'px-1 pb-0 pt-1'
                         }
                     }">
                     <template #TwodimensionCodeInfoValidPeriodExpirdate-data="{ row }">
@@ -64,6 +64,27 @@
                     <template #NoteInfo-data="{ row }">
                         <CarInsNoteInfo :NoteInfo="row.NoteInfo" />
                     </template>
+                    <template #pdfUuid-data="{ row }">
+                        <div v-if="row.pdfUuid != null && row.pdfUuid == row.jsonUuid" class="bg-red-500">
+                            {{ row.EntryNoCarNo }}
+                        </div>
+                        <div v-else>
+
+                            <ButtonDownload :uuid="row.pdfUuid" :filename="makeSt(row)" />
+                            <!-- {{ row.pdfUuid }} -->
+                        </div>
+                    </template>
+
+                    <template #jsonUuid-data="{ row }">
+                        <div v-if="row.pdfUuid != null && row.pdfUuid == row.jsonUuid" class="bg-red-500">
+                            {{ row.EntryNoCarNo }}
+                        </div>
+                        <div v-else>
+
+                            <ButtonDownload :uuid="row.jsonUuid" :filename="makeSt(row)" />
+                            <!-- {{ row.pdfUuid }} -->
+                        </div>
+                    </template>
                 </UTable>
             </div>
             <!-- <div>
@@ -81,6 +102,10 @@
 
 </template>
 <script setup lang="ts">
+
+function makeSt(row: components["schemas"]["carInspectionSchema"]) {
+    return row.TwodimensionCodeInfoValidPeriodExpirdate + "_" + row.TwodimensionCodeInfoEntryNoCarNo + "_" + row.ElectCertPublishdateE + row.ElectCertPublishdateY + "年" + ("00" + row.ElectCertPublishdateM).slice(-2) + "月" + ("00" + row.ElectCertPublishdateD).slice(-2) + "日発行"
+}
 
 const serial = ref();
 const type = ref();
@@ -108,7 +133,7 @@ async function onDrop(files: File[] | null) {
             a.lastModified > b.lastModified ? 1 : -1
         );
 
-        console.log("file:",files)
+        console.log("file:", files)
         await Promise.all(files.map(async ff => {
 
             const form = new FormData()
@@ -154,8 +179,12 @@ const Columns = [
     // { label: "車両ID", key: "CarId" },
     // { label: "発行日", key: "Publishdate" },
     // { label: "支局", key: "TranspotationBureauchiefName" },
+    // { label: "車両番号", key: "TwodimensionCodeInfoEntryNoCarNo", sortable: true },
+    // { label: "車両番号", key: "TwodimensionCodeInfoCarNo", sortable: true },
+    // { label: "車両番号", key: "TwodimensionCodeInfoModelSpecifyNoClassifyAroundNo", sortable: true },
+    // { label: "車両番号", key: "TwodimensionCodeInfoCarNoStampPlace", sortable: true },
     { label: "車両番号", key: "EntryNoCarNo", sortable: true },
-    { label: "有効期限", key: "TwodimensionCodeInfoValidPeriodExpirdate" },
+    { label: "有効期限", key: "TwodimensionCodeInfoValidPeriodExpirdate", sortable: true },
     { label: "所有者", key: "OwnernameLowLevelChar" },
     { label: "使用者", key: "UsernameLowLevelChar" },
     { label: "最大積載量", key: "Maxloadage" },
@@ -168,6 +197,8 @@ const Columns = [
     { label: "車体形状", key: "CarShape" },
     { label: "所度登録", key: "Firstregistdate" },
     { label: "備考", key: "NoteInfo" },
+    { label: "pdf", key: "pdfUuid" },
+    { label: "json", key: "jsonUuid" },
 ]
 
 

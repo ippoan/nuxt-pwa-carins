@@ -1,3 +1,5 @@
+import { hostname } from "os"
+
 // https://nuxt.com/docs/api/configuration/nuxt-config
 console.log("env.PWA_TITLE",process.env.PWA_TITLE)
 console.log("env.NUXT_CF_SERVER",process.env.stage=="preview"?process.env.NUXT_CF_SERVER_PREVIEW:process.env.NUXT_CF_SERVER_PRODUCT)
@@ -36,7 +38,7 @@ export default defineNuxtConfig({
       hmr: {
         protocol: "wss",
         clientPort: 443,
-
+        // host:"test_api.mtamaramu.com",
         // path: "hmr/",
       },
     },
@@ -49,9 +51,10 @@ export default defineNuxtConfig({
       viteInlineConfig.server = {
         ...viteInlineConfig.server,
         hmr: { // ここに書く
-          clientPort: 443,
           protocol: 'wss',
           path: 'hmr/',
+          // hostname:"test_api.mtamaramu.com",
+          clientPort: 443,
           // port: 443,
         },
       }
