@@ -28,9 +28,17 @@ export default defineNuxtConfig({
     // url:"https://uriage.ohishiunyusouko.com"
   },
   runtimeConfig: {
+    // Cloudflare設定（既存）
     cfId: process.env.NUXT_CF_ID,
     cfSecret: process.env.NUXT_CF_SECRET,
-    cfServer: process.env.NUXT_CF_SERVER
+    cfServer: process.env.NUXT_CF_SERVER,
+    // Cloud Run設定（新規）
+    cloudrunUrl: process.env.NUXT_CLOUDRUN_URL,
+    gcpServiceAccountKey: process.env.NUXT_GCP_SERVICE_ACCOUNT_KEY,
+    // パブリック設定
+    public: {
+      apiBackend: process.env.API_BACKEND || 'cloudflare',
+    },
   },
 
   vite: {

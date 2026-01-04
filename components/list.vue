@@ -202,25 +202,14 @@ const Columns = [
 ]
 
 
-const { data: RecentData, refresh: RecentRefresh, status: RecentStatus, clear: RecentClear } = useJsonPlaceholderData("/api/files/RecentUploaded", {
-    method: "GET",
+// バックエンド切り替え対応のComposablesを使用
+const { data: RecentData, refresh: RecentRefresh, status: RecentStatus, clear: RecentClear } = useRecentFilesData({
     lazy: true,
     cache: false,
-    transform: (v) => {
-        if (v == null) return undefined
-        return v
-    }
 })
 
-
-
-const { data, execute, refresh, status, clear } = useJsonPlaceholderData("/api/carInspect/current", {
-    method: "GET",
+const { data, execute, refresh, status, clear } = useCarInspectionData({
     cache: false,
-    transform: (v) => {
-        if (v == null) return undefined
-        return v
-    }
 })
 
 async function refreshData() {

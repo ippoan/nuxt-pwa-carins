@@ -8,14 +8,15 @@
     "generate": "nuxt generate",
     "preview": "PWA_TITLE=staging stage=preview nuxt build && wrangler pages deploy dist/ --branch preview",
     "publish": "nuxt build && wrangler pages deploy dist/ --branch production",
-    "deploy":"NITRO_PRESET=cloudflare_module nuxt build && wrangler deploy",
-    "deployWatch":"NITRO_PRESET=cloudflare_module nuxt build && wrangler deploy && wrangler tail nuxt-pwa-carins",
+    "deploy": "NITRO_PRESET=cloudflare_module nuxt build && wrangler deploy",
+    "deployWatch": "NITRO_PRESET=cloudflare_module nuxt build && wrangler deploy && wrangler tail nuxt-pwa-carins",
     "postinstall": "nuxt prepare"
   },
   "dependencies": {
     "@nuxt/ui": "2.20.0",
     "@vueuse/core": "^12.3.0",
     "@vueuse/nuxt": "^12.3.0",
+    "@yhonda-ohishi-pub-dev/logi-proto": "^0.1.0",
     "nuxt": "^3.15.1",
     "nuxt-api-party": "2.1.2",
     "openapi-typescript": "^5 || ^6 || ^7",
