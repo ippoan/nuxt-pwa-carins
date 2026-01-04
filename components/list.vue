@@ -17,7 +17,11 @@
 
             <div v-if="RecentData">
                 {{ RecentStatus }}
-                <UTable :rows="RecentData" :key="RecentStatus" :loading="RecentStatus === 'pending'" />
+                <UTable :rows="RecentData" :key="RecentStatus" :loading="RecentStatus === 'pending'">
+                    <template #uuid-data="{ row }">
+                        <ButtonDownload :uuid="row.uuid" :filename="row.filename" />
+                    </template>
+                </UTable>
             </div>
 
             <div v-if="data !== null" class="grid-row-3 mx-auto">
@@ -84,6 +88,14 @@
                             <ButtonDownload :uuid="row.jsonUuid" :filename="makeSt(row)" />
                             <!-- {{ row.pdfUuid }} -->
                         </div>
+                    </template>
+                    <template #actions-data="{ row }">
+                        <UButton
+                            color="sky"
+                            icon="i-ic:baseline-content-paste-search"
+                            :ui="{ rounded: 'rounded-none' }"
+                            @click.stop="previewPdf(row)"
+                        />
                     </template>
                 </UTable>
             </div>
@@ -166,6 +178,14 @@ function select(row: components["schemas"]["carInspectionSchema"]) {
     }
 }
 
+const { preview: previewFile } = useFileDownload();
+
+async function previewPdf(row: components["schemas"]["carInspectionSchema"]) {
+    if (row.pdfUuid) {
+        await previewFile(row.pdfUuid)
+    }
+}
+
 const refCount = ref(0)
 const q = ref("");
 
@@ -197,6 +217,7 @@ const Columns = [
     { label: "車体形状", key: "CarShape" },
     { label: "所度登録", key: "Firstregistdate" },
     { label: "備考", key: "NoteInfo" },
+    { label: "pdf", key: "actions" },
     { label: "pdf", key: "pdfUuid" },
     { label: "json", key: "jsonUuid" },
 ]

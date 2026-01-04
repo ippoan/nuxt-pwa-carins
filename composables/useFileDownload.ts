@@ -12,7 +12,7 @@ interface FileResponse {
 /**
  * Base64をBlobに変換
  */
-function B64toBlob(base64: string | null, type: string): Blob | null {
+function B64toBlob(base64: string | null | undefined, type: string): Blob | null {
   if (base64 == null) {
     return null;
   }
@@ -75,5 +75,46 @@ export const useFileDownload = () => {
     return true;
   };
 
-  return { download };
+  /**
+   * PDFをプレビュー表示（新しいタブで開く）
+   */
+  const preview = async (uuid: string): Promise<boolean> => {
+    let blob: Blob | null = null;
+
+    if (backend === 'cloudflare') {
+      // 既存のnuxt-api-party使用
+      const data = await $jsonPlaceholder("/api/files/viewJson/{uuid}", {
+        path: { uuid },
+      });
+      blob = B64toBlob(data.blob, data.type);
+    } else {
+      // Cloud Run gRPC プロキシ使用
+      const response = await $fetch<{ file: FileResponse }>('/api/grpc/files', {
+        method: 'POST',
+        body: {
+          method: 'get',
+          params: { uuid, includeBlob: true }
+        },
+      });
+      if (response?.file) {
+        blob = B64toBlob(response.file.blob, response.file.type);
+      }
+    }
+
+    if (blob == null) {
+      console.error('Failed to preview file: blob is null');
+      return false;
+    }
+
+    // 新しいタブでPDFを表示
+    const url = URL.createObjectURL(blob);
+    window.open(url, '_blank');
+
+    // メモリリーク防止
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
+
+    return true;
+  };
+
+  return { download, preview };
 };
