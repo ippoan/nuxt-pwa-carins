@@ -13,6 +13,10 @@
     "postinstall": "nuxt prepare"
   },
   "dependencies": {
+    "@bufbuild/protobuf": "^2.10.2",
+    "@connectrpc/connect": "^2.1.1",
+    "@connectrpc/connect-node": "^2.1.1",
+    "@connectrpc/connect-web": "^2.1.1",
     "@nuxt/ui": "2.20.0",
     "@vueuse/core": "^12.3.0",
     "@vueuse/nuxt": "^12.3.0",

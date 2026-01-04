@@ -1,9 +1,19 @@
 /**
  * gRPCプロキシエンドポイント: 車検証API
- * Cloud RunのgRPCサービスにgRPC-web-json形式でリクエストを転送
+ * Cloud RunのgRPCサービスにConnect RPC (grpc-web) で接続
  */
 
-import { getCloudRunIdToken } from '~/server/utils/cloudrun-auth';
+import { create } from '@bufbuild/protobuf';
+import {
+  ListCarInspectionsRequestSchema,
+  GetCarInspectionRequestSchema,
+  DeleteCarInspectionRequestSchema,
+  CreateCarInspectionRequestSchema,
+  CarInspectionSchema,
+} from '@yhonda-ohishi-pub-dev/logi-proto';
+import { EmptySchema } from '@yhonda-ohishi-pub-dev/logi-proto';
+import { getCarInspectionClient, clearGrpcClientCache } from '~/server/utils/grpc-client';
+import { clearTokenCache } from '~/server/utils/cloudrun-auth';
 
 type GrpcMethod =
   | 'listCurrent'
@@ -19,66 +29,109 @@ interface RequestBody {
   params?: Record<string, unknown>;
 }
 
-// gRPCメソッド名とパスのマッピング
-const methodPaths: Record<GrpcMethod, string> = {
-  listCurrent: '/logi.car_inspection.CarInspectionService/ListCurrentCarInspections',
-  list: '/logi.car_inspection.CarInspectionService/ListCarInspections',
-  get: '/logi.car_inspection.CarInspectionService/GetCarInspection',
-  create: '/logi.car_inspection.CarInspectionService/CreateCarInspection',
-  delete: '/logi.car_inspection.CarInspectionService/DeleteCarInspection',
-  listExpiredOrAboutToExpire: '/logi.car_inspection.CarInspectionService/ListExpiredOrAboutToExpire',
-  listRenewTargets: '/logi.car_inspection.CarInspectionService/ListRenewTargets',
-};
-
 export default defineEventHandler(async (event) => {
-  const config = useRuntimeConfig();
-
-  if (!config.cloudrunUrl) {
-    throw createError({
-      statusCode: 500,
-      message: 'Cloud Run URL is not configured',
-    });
-  }
-
   const body = await readBody<RequestBody>(event);
 
-  if (!body.method || !methodPaths[body.method]) {
+  if (!body.method) {
     throw createError({
       statusCode: 400,
-      message: `Invalid method: ${body.method}`,
+      message: 'Method is required',
     });
   }
 
   try {
-    // IAMトークンを取得
-    const token = await getCloudRunIdToken(config.cloudrunUrl as string);
+    const client = await getCarInspectionClient();
+    const params = body.params || {};
 
-    const grpcUrl = `${config.cloudrunUrl}${methodPaths[body.method]}`;
+    switch (body.method) {
+      case 'listCurrent': {
+        const response = await client.listCurrentCarInspections(create(EmptySchema, {}));
+        return {
+          carInspections: response.carInspections,
+          pagination: response.pagination,
+        };
+      }
 
-    // gRPC-web-json形式でリクエスト
-    const response = await fetch(grpcUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-        'Accept': 'application/json',
-      },
-      body: JSON.stringify(body.params || {}),
-    });
+      case 'list': {
+        const request = create(ListCarInspectionsRequestSchema, {
+          carIdFilter: params.carIdFilter as string | undefined,
+          pagination: params.pagination as { page?: number; pageSize?: number } | undefined,
+        });
+        const response = await client.listCarInspections(request);
+        return {
+          carInspections: response.carInspections,
+          pagination: response.pagination,
+        };
+      }
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('gRPC request failed:', response.status, errorText);
-      throw createError({
-        statusCode: response.status,
-        message: `gRPC request failed: ${errorText}`,
-      });
+      case 'get': {
+        const request = create(GetCarInspectionRequestSchema, {
+          electCertMgNo: params.electCertMgNo as string,
+          grantdateE: params.grantdateE as string,
+          grantdateY: params.grantdateY as string,
+          grantdateM: params.grantdateM as string,
+          grantdateD: params.grantdateD as string,
+        });
+        const response = await client.getCarInspection(request);
+        return {
+          carInspection: response.carInspection,
+        };
+      }
+
+      case 'create': {
+        const carInspection = create(CarInspectionSchema, params.carInspection as Record<string, unknown>);
+        const request = create(CreateCarInspectionRequestSchema, {
+          carInspection,
+        });
+        const response = await client.createCarInspection(request);
+        return {
+          carInspection: response.carInspection,
+        };
+      }
+
+      case 'delete': {
+        const request = create(DeleteCarInspectionRequestSchema, {
+          electCertMgNo: params.electCertMgNo as string,
+          grantdateE: params.grantdateE as string,
+          grantdateY: params.grantdateY as string,
+          grantdateM: params.grantdateM as string,
+          grantdateD: params.grantdateD as string,
+        });
+        await client.deleteCarInspection(request);
+        return { success: true };
+      }
+
+      case 'listExpiredOrAboutToExpire': {
+        const response = await client.listExpiredOrAboutToExpire(create(EmptySchema, {}));
+        return {
+          carInspections: response.carInspections,
+          pagination: response.pagination,
+        };
+      }
+
+      case 'listRenewTargets': {
+        const response = await client.listRenewTargets(create(EmptySchema, {}));
+        return {
+          carInspections: response.carInspections,
+          pagination: response.pagination,
+        };
+      }
+
+      default:
+        throw createError({
+          statusCode: 400,
+          message: `Invalid method: ${body.method}`,
+        });
     }
-
-    const data = await response.json();
-    return data;
   } catch (error) {
     console.error('gRPC proxy error:', error);
+
+    // トークン期限切れの可能性がある場合はキャッシュをクリア
+    if (error instanceof Error && error.message.includes('401')) {
+      clearTokenCache();
+      clearGrpcClientCache();
+    }
+
     throw createError({
       statusCode: 500,
       message: error instanceof Error ? error.message : 'Unknown error',

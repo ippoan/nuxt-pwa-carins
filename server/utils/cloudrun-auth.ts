@@ -159,8 +159,14 @@ export async function getCloudRunIdToken(targetAudience: string): Promise<string
 
   let serviceAccount: ServiceAccountKey;
   try {
-    serviceAccount = JSON.parse(config.gcpServiceAccountKey as string);
+    // Nuxtが自動的にJSONをパースしている場合はそのまま使用
+    if (typeof config.gcpServiceAccountKey === 'object') {
+      serviceAccount = config.gcpServiceAccountKey as unknown as ServiceAccountKey;
+    } else {
+      serviceAccount = JSON.parse(config.gcpServiceAccountKey as string);
+    }
   } catch (e) {
+    console.error('JSON parse error:', e);
     throw new Error('Invalid GCP_SERVICE_ACCOUNT_KEY format');
   }
 

@@ -12,8 +12,8 @@
 const { download: downloadFile } = useFileDownload();
 
 const props = defineProps<{
-    uuid: string,
-    filename: string | null
+    uuid?: string,
+    filename?: string | null
 }>();
 
 async function download() {

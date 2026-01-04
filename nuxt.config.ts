@@ -17,6 +17,9 @@ export default defineNuxtConfig({
       autoSubfolderIndex: false
     }
   },
+  build: {
+    transpile: ['@yhonda-ohishi-pub-dev/logi-proto', '@bufbuild/protobuf', '@connectrpc/connect', '@connectrpc/connect-web'],
+  },
   devServer: {
     host: '0.0.0.0',
     // https: {
