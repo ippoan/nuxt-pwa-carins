@@ -1,12 +1,18 @@
 <template>
 
-    <div ref="dropZoneRef" class="h-[80svh]">
+    <div ref="dropZoneRef" class="h-[80svh] relative">
 
-        <div v-if="isOverDropZone"
-            class="flex flex-col  w-full min-h-200px h-[80svh] bg-gray-400/10 justify-center items-center mt-6 rounded">
-            Drop here
+        <div v-show="showDropZone"
+            class="absolute inset-0 flex flex-col w-full h-full bg-gray-400/50 justify-center items-center rounded z-50">
+            <div class="text-2xl">Drop here</div>
+            <div
+                class="absolute top-2 left-2 px-4 py-2 bg-gray-500 text-white rounded"
+                @mouseenter="cancelDrop"
+            >
+                ここにマウスでキャンセル
+            </div>
         </div>
-        <div v-else>
+        <div>
             <Scan BtnName="Scan" v-model:serial="serial" v-model:type="type" v-model:timestamp="timestamp" />
             <div>
                 serial:{{ serial }}
@@ -133,6 +139,7 @@ const filesData = shallowRef<{ name: string, size: number, type: string, lastMod
 
 async function onDrop(files: File[] | null) {
     filesData.value = []
+    showDropZone.value = false
     if (files) {
         // filesData.value = files.map(file => ({
         //   name: file.name,
@@ -162,8 +169,31 @@ async function onDrop(files: File[] | null) {
 }
 
 const dropZoneRef = useTemplateRef<HTMLElement>('dropZoneRef')
+const showDropZone = ref(false)
+const cancelled = ref(false)
 
 const { isOverDropZone } = useDropZone(dropZoneRef, onDrop)
+
+// ドラッグ開始時にドロップゾーンを表示
+watch(isOverDropZone, (newVal) => {
+    console.log('isOverDropZone changed:', newVal, 'cancelled:', cancelled.value, 'showDropZone:', showDropZone.value)
+    if (newVal && !cancelled.value) {
+        showDropZone.value = true
+        console.log('showDropZone set to true')
+    }
+    // showDropZoneがfalseの時だけcancelledをリセット
+    if (!newVal && !showDropZone.value) {
+        cancelled.value = false
+        console.log('cancelled reset to false')
+    }
+})
+
+function cancelDrop() {
+    console.log('cancelDrop called, before:', { showDropZone: showDropZone.value, cancelled: cancelled.value })
+    showDropZone.value = false
+    cancelled.value = true
+    console.log('cancelDrop done, after:', { showDropZone: showDropZone.value, cancelled: cancelled.value })
+}
 
 function select(row: components["schemas"]["carInspectionSchema"]) {
     if (filteredRows.value) {
