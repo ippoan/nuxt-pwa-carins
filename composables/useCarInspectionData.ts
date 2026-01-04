@@ -15,7 +15,15 @@ interface UseCarInspectionDataOptions {
 /**
  * gRPCレスポンス(camelCase)からREST API互換形式(PascalCase)に変換
  */
-function mapGrpcToSchema(grpc: Record<string, unknown>): CarInspectionSchema {
+function mapGrpcToSchema(grpc: Record<string, unknown>, index: number): CarInspectionSchema {
+  // デバッグ: 最初の3件のみ全フィールドを出力
+  if (index < 3) {
+    console.log(`[DEBUG] CarInspection[${index}] raw grpc:`, JSON.stringify(grpc, null, 2));
+    console.log(`[DEBUG] CarInspection[${index}] pdfUuid:`, grpc.pdfUuid);
+    console.log(`[DEBUG] CarInspection[${index}] jsonUuid:`, grpc.jsonUuid);
+    // 全キーを出力（フィールド名の確認用）
+    console.log(`[DEBUG] CarInspection[${index}] keys:`, Object.keys(grpc));
+  }
   return {
     CertInfoImportFileVersion: grpc.certInfoImportFileVersion as string,
     Acceptoutputno: grpc.acceptoutputno as string,
@@ -140,7 +148,7 @@ export const useCarInspectionData = (options?: UseCarInspectionDataOptions) => {
       lazy: options?.lazy ?? false,
       transform: (response: { carInspections?: Record<string, unknown>[] }) => {
         if (!response?.carInspections) return undefined;
-        return response.carInspections.map(mapGrpcToSchema);
+        return response.carInspections.map((item, index) => mapGrpcToSchema(item, index));
       },
     });
   }
@@ -166,7 +174,7 @@ export const useExpiredCarInspectionData = (options?: UseCarInspectionDataOption
       lazy: options?.lazy ?? true,
       transform: (response: { carInspections?: Record<string, unknown>[] }) => {
         if (!response?.carInspections) return undefined;
-        return response.carInspections.map(mapGrpcToSchema);
+        return response.carInspections.map((item, index) => mapGrpcToSchema(item, index));
       },
     });
   }

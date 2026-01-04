@@ -3,12 +3,6 @@
  * Cloudflare (REST) と Cloud Run (gRPC) の両方に対応
  */
 
-interface FileResponse {
-  blob: string | null;
-  type: string;
-  filename: string;
-}
-
 /**
  * Base64をBlobに変換
  */
@@ -44,16 +38,32 @@ export const useFileDownload = () => {
       });
       blob = B64toBlob(data.blob, data.type);
     } else {
-      // Cloud Run gRPC プロキシ使用
-      const response = await $fetch<{ file: FileResponse }>('/api/grpc/files', {
-        method: 'POST',
-        body: {
-          method: 'get',
-          params: { uuid, includeBlob: true }
-        },
-      });
-      if (response?.file) {
-        blob = B64toBlob(response.file.blob, response.file.type);
+      // Cloud Run gRPC プロキシ使用（ストリーミングダウンロード）
+      try {
+        // まずファイル情報を取得してMIMEタイプを取得
+        const fileInfo = await $fetch<{ file: { type: string } }>('/api/grpc/files', {
+          method: 'POST',
+          body: {
+            method: 'get',
+            params: { uuid, includeBlob: false }
+          },
+        });
+        const mimeType = fileInfo?.file?.type || 'application/octet-stream';
+
+        // ストリーミングダウンロードでファイルデータを取得
+        const response = await $fetch<{ blob: string }>('/api/grpc/files', {
+          method: 'POST',
+          body: {
+            method: 'download',
+            params: { uuid }
+          },
+        });
+        if (response?.blob) {
+          blob = B64toBlob(response.blob, mimeType);
+        }
+      } catch (error) {
+        console.error('gRPC fetch error:', error);
+        return false;
       }
     }
 
@@ -88,16 +98,32 @@ export const useFileDownload = () => {
       });
       blob = B64toBlob(data.blob, data.type);
     } else {
-      // Cloud Run gRPC プロキシ使用
-      const response = await $fetch<{ file: FileResponse }>('/api/grpc/files', {
-        method: 'POST',
-        body: {
-          method: 'get',
-          params: { uuid, includeBlob: true }
-        },
-      });
-      if (response?.file) {
-        blob = B64toBlob(response.file.blob, response.file.type);
+      // Cloud Run gRPC プロキシ使用（ストリーミングダウンロード）
+      try {
+        // まずファイル情報を取得してMIMEタイプを取得
+        const fileInfo = await $fetch<{ file: { type: string } }>('/api/grpc/files', {
+          method: 'POST',
+          body: {
+            method: 'get',
+            params: { uuid, includeBlob: false }
+          },
+        });
+        const mimeType = fileInfo?.file?.type || 'application/octet-stream';
+
+        // ストリーミングダウンロードでファイルデータを取得
+        const response = await $fetch<{ blob: string }>('/api/grpc/files', {
+          method: 'POST',
+          body: {
+            method: 'download',
+            params: { uuid }
+          },
+        });
+        if (response?.blob) {
+          blob = B64toBlob(response.blob, mimeType);
+        }
+      } catch (error) {
+        console.error('gRPC fetch error:', error);
+        return false;
       }
     }
 

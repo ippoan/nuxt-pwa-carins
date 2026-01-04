@@ -2670,10 +2670,10 @@
   dependencies:
     vue "^3.5.13"
 
-"@yhonda-ohishi-pub-dev/logi-proto@^0.1.0":
-  version "0.1.0"
-  resolved "https://npm.pkg.github.com/download/@yhonda-ohishi-pub-dev/logi-proto/0.1.0/cd6cc014ac0ba9d1353966d837faa57135412206"
-  integrity sha512-TReMdDKqM+sWRmlFBi037k/lpq3sSpBX2AHudDFJZaJZ0wtj0OSv8h3NKR4RV4M4uAOa1zYXsXbdWyU4crG/ng==
+"@yhonda-ohishi-pub-dev/logi-proto@^0.1.1":
+  version "0.1.1"
+  resolved "https://npm.pkg.github.com/download/@yhonda-ohishi-pub-dev/logi-proto/0.1.1/bbc2341b728c22553320c4a25ca5be0472bac070#bbc2341b728c22553320c4a25ca5be0472bac070"
+  integrity sha512-Y9Z3Iok9iehk0DhXRJOU0TiEgDtJttYPJw02xGMl88hGMjxeMEJ0Exnos8GFEcn2O/gzwWHy8QPrezWuky7vMw==
   dependencies:
     "@bufbuild/protobuf" "^2.10.2"
     "@connectrpc/connect" "^2.1.1"
