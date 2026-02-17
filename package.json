@@ -31,6 +31,7 @@
   "devDependencies": {
     "@vite-pwa/assets-generator": "^0.2.6",
     "@vite-pwa/nuxt": "^0.10.6",
+    "playwright": "^1.58.1",
     "wrangler": "^3.100.0"
   }
 }

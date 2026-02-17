@@ -91,22 +91,14 @@ onMounted(() => {
   } else {
     installed.value = false;
   }
+  const { upload } = useFileUpload();
   if ("launchQueue" in window) {
     if (window.launchQueue) {
       window.launchQueue.setConsumer(async (launchP) => {
         if (launchP.files && launchP.files.length) {
-          // console.log("file", launchP.files);
-
           launchP.files.forEach(async (fileOne) => {
             const file = await fileOne.getFile();
-            const form = new FormData();
-            form.append("data", file);
-            form.append("from", "front");
-            type test = undefined | { message: string; uuid: string };
-            const res = await $fetch<test>("/api/recieve", {
-              method: "post",
-              body: form,
-            });
+            const res = await upload(file, "front");
 
             if (res != undefined && res.uuid) {
               uuid.value = res.uuid;
@@ -115,7 +107,6 @@ onMounted(() => {
               message.value = res.message;
             }
           });
-          // console.log("res:", res);
         }
       });
     }

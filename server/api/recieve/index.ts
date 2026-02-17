@@ -1,30 +1,72 @@
-export default defineEventHandler(async (event) => {
+/**
+ * ファイル受信API（PWA share_target / ドロップゾーン用）
+ * Cloudflare (hono-logi) と rust-logi (cf-grpc-proxy経由) に対応
+ */
 
+export default defineEventHandler(async (event) => {
     const ap = await readMultipartFormData(event)
-    if (ap != undefined) {
-        const multi = ap[0]
-        // console.log(multi)
-        const blob = Buffer.from(multi["data"]).toString("base64")
-        // console.log("ap:", ap)
-        // multi["blob"]=
+    if (ap == undefined) {
+        console.log("ap undefined")
+        await sendRedirect(event, "/?message=" + encodeURIComponent("失敗しました"), 302)
+        return
+    }
+
+    const multi = ap[0]
+    console.log("multi:", multi.filename)
+
+    const config = useRuntimeConfig(event)
+    const backend = config.public.apiBackend
+
+    if (backend === 'rust-logi') {
+        // rust-logi: Service Binding経由でcf-grpc-proxyにアップロード
+        try {
+            const { cloudflare } = event.context
+            if (!cloudflare?.env?.GRPC_PROXY_SERVICE) {
+                throw new Error('GRPC_PROXY_SERVICE binding not available')
+            }
+
+            const blobBase64 = Buffer.from(multi.data).toString('base64')
+            const targetUrl = 'https://cf-grpc-proxy.workers.dev/logi.files.FilesService/CreateFile'
+            const response = await cloudflare.env.GRPC_PROXY_SERVICE.fetch(targetUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Connect-Protocol-Version': '1',
+                },
+                body: JSON.stringify({
+                    filename: multi.filename || 'unnamed',
+                    type: multi.type || 'application/octet-stream',
+                    blobBase64: blobBase64,
+                }),
+            })
+
+            if (!response.ok) {
+                const errorText = await response.text()
+                throw new Error(`Upload failed: ${response.status} ${errorText}`)
+            }
+
+            const result = await response.json() as { file?: { uuid?: string } }
+            const uuid = result?.file?.uuid || ''
+            return { uuid, message: '送信完了しました' }
+        } catch (e) {
+            console.error("rust-logi upload failed:", e)
+            if (1 in ap && ap[1].name == "from" && ap[1].data.toString() == "front") {
+                return { uuid: "", message: "失敗しました" }
+            }
+            await sendRedirect(event, "/?message=" + encodeURIComponent("失敗しました"), 302)
+        }
+    } else {
+        // cloudflare / cloudrun: 既存のhono-logiへのアップロード
+        const blob = Buffer.from(multi.data).toString("base64")
         const sendData = {
             blob: blob,
             filename: multi.filename,
             type: multi.type,
         }
-        console.log("multi:", multi.filename)
-        // console.log(sendData)
         const { cfId, cfSecret, cfServer } = useRuntimeConfig(event)
-        // console.log("NUXT_CF_ID:", cfId)
-        // console.log("NUXT_CF_ID:", cfSecret)
-        // console.log("cfServer:", cfServer)
-        // console.log("JSON:", JSON.stringify(sendData))
         try {
-
-            // const res: any = await $fetch("https://staging.hono-logi.mtamaramu.com/api/files", {
             const res: any = await $fetch(cfServer, {
                 method: "post",
-                // data: JSON.stringify(sendData),
                 body: JSON.stringify(sendData),
                 headers: {
                     "CF-Access-Client-Id": cfId,
@@ -32,55 +74,18 @@ export default defineEventHandler(async (event) => {
                     "Content-Type": "application/json"
                 },
             })
-            // let res: any
-            // event.waitUntil(
-            //     $fetch(cfServer, {
-            //         method: "post",
-            //         // data: JSON.stringify(sendData),
-            //         body: JSON.stringify(sendData),
-            //         headers: {
-            //             "CF-Access-Client-Id": cfId,
-            //             "CF-Access-Client-Secret": cfSecret,
-            //             "Content-Type": "application/json"
-            //         },
-            //     })
-
-            // )
             console.log("atf post")
-            // console.log("res:", JSON.stringify(res))
-            // if(multi?.from){
-
-            // }
             if (1 in ap && ap[1].name == "from" && ap[1].data.toString() == "front") {
                 console.log("送信完了しました")
                 return { uuid: "", message: "送信完了しました" }
             } else {
-                // if(m)
-                console.log(multi)
                 console.log("送信完了しました2")
-                // await sendRedirect(event, "/?message=" + encodeURIComponent("送信完了しました"), 302)
-                
                 return { uuid: "", message: "送信完了しました" }
-                // await sendRedirect(event, "/?uuid=" + res.uuid + "&message=" + encodeURIComponent("送信完了しました"), 302)
             }
-            // await sendRedirect(event, "/?uuid=" + res.uuid, 302)
         } catch (e) {
             console.log("失敗しました 302")
             console.log(JSON.stringify(e))
             await sendRedirect(event, "/?message=" + encodeURIComponent("失敗しました"), 302)
         }
-    } else {
-        console.log("ap undefined")
-        await sendRedirect(event, "/?message=" + encodeURIComponent("失敗しました"), 302)
     }
-    // re
-    // const name = getRouterParam(event, 'name')
-    // const file = getRouterParam(event, 'file')
-    // console.log("name:", name)
-    // console.log("file:", file)
-    // console.log("ap:", ap)
-    // console.log("lls")
-    // console.log(event)
-    // return `Hello, ${name}!`
-    // return false
 })

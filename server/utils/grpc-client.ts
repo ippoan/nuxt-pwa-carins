@@ -5,7 +5,7 @@
 
 import { createClient, type Client } from '@connectrpc/connect';
 import { createGrpcWebTransport } from '@connectrpc/connect-web';
-import { CarInspectionService } from '@yhonda-ohishi-pub-dev/logi-proto';
+import { CarInspectionService, FilesService } from '@yhonda-ohishi-pub-dev/logi-proto';
 import { getCloudRunIdToken } from './cloudrun-auth';
 
 /**
@@ -21,7 +21,9 @@ export async function getCarInspectionClient(): Promise<Client<typeof CarInspect
   }
 
   // IAMトークンを取得（内部でキャッシュされる）
+  const startToken = Date.now();
   const token = await getCloudRunIdToken(baseUrl);
+  console.log(`[TIMING] getCloudRunIdToken: ${Date.now() - startToken}ms`);
 
   // gRPC-Web トランスポートを作成
   const transport = createGrpcWebTransport({
@@ -37,6 +39,32 @@ export async function getCarInspectionClient(): Promise<Client<typeof CarInspect
 
   // クライアントを作成
   return createClient(CarInspectionService, transport);
+}
+
+/**
+ * FilesService用のConnect RPCクライアントを取得
+ */
+export async function getFilesClient(): Promise<Client<typeof FilesService>> {
+  const config = useRuntimeConfig();
+  const baseUrl = config.cloudrunUrl as string;
+
+  if (!baseUrl) {
+    throw new Error('Cloud Run URL is not configured');
+  }
+
+  const token = await getCloudRunIdToken(baseUrl);
+
+  const transport = createGrpcWebTransport({
+    baseUrl,
+    interceptors: [
+      (next) => async (req) => {
+        req.header.set('Authorization', `Bearer ${token}`);
+        return next(req);
+      },
+    ],
+  });
+
+  return createClient(FilesService, transport);
 }
 
 /**

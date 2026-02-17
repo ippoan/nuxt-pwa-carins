@@ -40,12 +40,16 @@ export default defineEventHandler(async (event) => {
   }
 
   try {
+    const startClient = Date.now();
     const client = await getCarInspectionClient();
+    console.log(`[TIMING] getCarInspectionClient: ${Date.now() - startClient}ms`);
     const params = body.params || {};
 
+    const startGrpc = Date.now();
     switch (body.method) {
       case 'listCurrent': {
         const response = await client.listCurrentCarInspections(create(EmptySchema, {}));
+        console.log(`[TIMING] gRPC listCurrent: ${Date.now() - startGrpc}ms`);
         return {
           carInspections: response.carInspections,
           pagination: response.pagination,

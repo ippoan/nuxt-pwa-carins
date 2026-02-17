@@ -132,8 +132,19 @@ export const useCarInspectionData = (options?: UseCarInspectionDataOptions) => {
       cache: options?.cache ?? false,
       transform: (v) => v ?? undefined,
     });
+  } else if (backend === 'rust-logi') {
+    // rust-logi: ブラウザ側Connect RPC経由（cf-grpc-proxy → CloudRun）
+    const { $grpc } = useNuxtApp();
+    return useAsyncData('carInspections', async () => {
+      const response = await $grpc.carInspections.listCurrentCarInspections({});
+      if (!response?.carInspections) return undefined;
+      return response.carInspections.map((ci: Record<string, unknown>) => mapGrpcToSchema(ci));
+    }, {
+      lazy: options?.lazy ?? false,
+      server: false,
+    });
   } else {
-    // Cloud Run gRPC プロキシ使用
+    // Cloud Run gRPC プロキシ使用（直接接続）
     return useFetch<CarInspectionSchema[]>('/api/grpc/car-inspections', {
       method: 'POST',
       body: { method: 'listCurrent', params: {} },
@@ -159,7 +170,19 @@ export const useExpiredCarInspectionData = (options?: UseCarInspectionDataOption
       cache: options?.cache ?? false,
       transform: (v) => v ?? undefined,
     });
+  } else if (backend === 'rust-logi') {
+    // rust-logi: ブラウザ側Connect RPC経由（cf-grpc-proxy → CloudRun）
+    const { $grpc } = useNuxtApp();
+    return useAsyncData('expiredCarInspections', async () => {
+      const response = await $grpc.carInspections.listExpiredOrAboutToExpire({});
+      if (!response?.carInspections) return undefined;
+      return response.carInspections.map((ci: Record<string, unknown>) => mapGrpcToSchema(ci));
+    }, {
+      lazy: options?.lazy ?? true,
+      server: false,
+    });
   } else {
+    // Cloud Run gRPC プロキシ使用（直接接続）
     return useFetch<CarInspectionSchema[]>('/api/grpc/car-inspections', {
       method: 'POST',
       body: { method: 'listExpiredOrAboutToExpire', params: {} },

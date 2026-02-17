@@ -50,6 +50,17 @@ export const useRecentFilesData = (options?: UseFilesDataOptions) => {
       cache: options?.cache ?? false,
       transform: (v) => v ?? undefined,
     });
+  } else if (backend === 'rust-logi') {
+    // rust-logi: ブラウザ側Connect RPC経由
+    const { $grpc } = useNuxtApp();
+    return useAsyncData('recentFiles', async () => {
+      const response = await $grpc.files.listRecentUploadedFiles({});
+      if (!response?.files) return undefined;
+      return response.files.map((f: Record<string, unknown>) => mapGrpcFileToSchema(f));
+    }, {
+      lazy: options?.lazy ?? true,
+      server: false,
+    });
   } else {
     return useFetch<FileData[]>('/api/grpc/files', {
       method: 'POST',
@@ -75,6 +86,17 @@ export const useFilesData = (options?: UseFilesDataOptions) => {
       lazy: options?.lazy ?? true,
       cache: options?.cache ?? false,
       transform: (v) => v ?? undefined,
+    });
+  } else if (backend === 'rust-logi') {
+    // rust-logi: ブラウザ側Connect RPC経由
+    const { $grpc } = useNuxtApp();
+    return useAsyncData('filesList', async () => {
+      const response = await $grpc.files.listFiles({});
+      if (!response?.files) return undefined;
+      return response.files.map((f: Record<string, unknown>) => mapGrpcFileToSchema(f));
+    }, {
+      lazy: options?.lazy ?? true,
+      server: false,
     });
   } else {
     return useFetch<FileData[]>('/api/grpc/files', {

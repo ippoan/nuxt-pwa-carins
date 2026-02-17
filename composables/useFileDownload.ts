@@ -1,6 +1,6 @@
 /**
  * ファイルダウンロードComposable
- * Cloudflare (REST) と Cloud Run (gRPC) の両方に対応
+ * Cloudflare (REST), Cloud Run (gRPC直接), rust-logi (cf-grpc-proxy経由) に対応
  */
 
 /**
@@ -23,6 +23,28 @@ function B64toBlob(base64: string | null | undefined, type: string): Blob | null
 }
 
 /**
+ * rust-logi経由でファイルのBlobを取得（ストリーミングダウンロード）
+ * Base64を経由せず、バイナリチャンクを直接Blobに変換
+ */
+async function fetchBlobViaRustLogi(
+  $grpc: ReturnType<typeof useNuxtApp>['$grpc'],
+  uuid: string,
+): Promise<Blob | null> {
+  // ファイル情報を取得してMIMEタイプを取得
+  const fileInfo = await $grpc.files.getFile({ uuid, includeBlob: false });
+  const mimeType = (fileInfo?.file as Record<string, unknown>)?.type as string || 'application/octet-stream';
+
+  // ストリーミングダウンロード
+  const chunks: Uint8Array[] = [];
+  for await (const chunk of $grpc.files.downloadFile({ uuid })) {
+    chunks.push(chunk.data);
+  }
+
+  if (chunks.length === 0) return null;
+  return new Blob(chunks, { type: mimeType });
+}
+
+/**
  * ファイルダウンロード機能を提供
  */
 export const useFileDownload = () => {
@@ -37,10 +59,18 @@ export const useFileDownload = () => {
         path: { uuid },
       });
       blob = B64toBlob(data.blob, data.type);
-    } else {
-      // Cloud Run gRPC プロキシ使用（ストリーミングダウンロード）
+    } else if (backend === 'rust-logi') {
+      // rust-logi: ブラウザ側Connect RPC経由（ストリーミングダウンロード）
       try {
-        // まずファイル情報を取得してMIMEタイプを取得
+        const { $grpc } = useNuxtApp();
+        blob = await fetchBlobViaRustLogi($grpc, uuid);
+      } catch (error) {
+        console.error('rust-logi download error:', error);
+        return false;
+      }
+    } else {
+      // Cloud Run gRPC プロキシ使用（直接接続）
+      try {
         const fileInfo = await $fetch<{ file: { type: string } }>('/api/grpc/files', {
           method: 'POST',
           body: {
@@ -50,7 +80,6 @@ export const useFileDownload = () => {
         });
         const mimeType = fileInfo?.file?.type || 'application/octet-stream';
 
-        // ストリーミングダウンロードでファイルデータを取得
         const response = await $fetch<{ blob: string }>('/api/grpc/files', {
           method: 'POST',
           body: {
@@ -97,10 +126,18 @@ export const useFileDownload = () => {
         path: { uuid },
       });
       blob = B64toBlob(data.blob, data.type);
-    } else {
-      // Cloud Run gRPC プロキシ使用（ストリーミングダウンロード）
+    } else if (backend === 'rust-logi') {
+      // rust-logi: ブラウザ側Connect RPC経由（ストリーミングダウンロード）
       try {
-        // まずファイル情報を取得してMIMEタイプを取得
+        const { $grpc } = useNuxtApp();
+        blob = await fetchBlobViaRustLogi($grpc, uuid);
+      } catch (error) {
+        console.error('rust-logi preview error:', error);
+        return false;
+      }
+    } else {
+      // Cloud Run gRPC プロキシ使用（直接接続）
+      try {
         const fileInfo = await $fetch<{ file: { type: string } }>('/api/grpc/files', {
           method: 'POST',
           body: {
@@ -110,7 +147,6 @@ export const useFileDownload = () => {
         });
         const mimeType = fileInfo?.file?.type || 'application/octet-stream';
 
-        // ストリーミングダウンロードでファイルデータを取得
         const response = await $fetch<{ blob: string }>('/api/grpc/files', {
           method: 'POST',
           body: {

@@ -136,29 +136,19 @@ import Scan from './scan.vue';
 import { useDropZone } from '@vueuse/core'
 
 const filesData = shallowRef<{ name: string, size: number, type: string, lastModified: number }[]>([])
+const { upload } = useFileUpload();
 
 async function onDrop(files: File[] | null) {
     filesData.value = []
     showDropZone.value = false
     if (files) {
-        // filesData.value = files.map(file => ({
-        //   name: file.name,
-        //   size: file.size,
-        //   type: file.type,
-        //   lastModified: file.lastModified,
-        // }))
-
         files.sort((a, b) =>
             a.lastModified > b.lastModified ? 1 : -1
         );
 
         console.log("file:", files)
         await Promise.all(files.map(async ff => {
-
-            const form = new FormData()
-            form.append("data", ff)
-            form.append("noredirect", "")
-            var res = await $fetch("/api/recieve", { method: "post", body: form })
+            const res = await upload(ff)
             console.log("res:", res)
             console.log("onDropPost")
         }))

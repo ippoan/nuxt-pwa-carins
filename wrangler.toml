@@ -2,7 +2,23 @@ name = "nuxt-pwa-carins"
 #pages_build_output_dir="./dist"
 
 compatibility_date = "2024-09-19"
+compatibility_flags = ["nodejs_compat"]
 main = "./.output/server/index.mjs"
 assets = { directory = "./.output/public/", binding = "ASSETS" }
 
+# Service Binding: cf-grpc-proxyのDurable Objectに接続
+[[services]]
+binding = "GRPC_PROXY_SERVICE"
+service = "cf-grpc-proxy"
+
+[vars]
+NUXT_PUBLIC_API_BACKEND = "rust-logi"
+
 [env.preview]
+# preview環境: rust-logi検証用
+[[env.preview.services]]
+binding = "GRPC_PROXY_SERVICE"
+service = "cf-grpc-proxy"
+
+[env.preview.vars]
+NUXT_PUBLIC_API_BACKEND = "rust-logi"
