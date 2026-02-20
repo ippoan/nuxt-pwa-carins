@@ -41,6 +41,7 @@ export default defineNuxtConfig({
     // パブリック設定
     public: {
       apiBackend: process.env.API_BACKEND || 'cloudflare',
+      authWorkerUrl: process.env.NUXT_PUBLIC_AUTH_WORKER_URL || '',
     },
   },
 

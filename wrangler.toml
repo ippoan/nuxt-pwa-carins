@@ -13,6 +13,7 @@ service = "cf-grpc-proxy"
 
 [vars]
 NUXT_PUBLIC_API_BACKEND = "rust-logi"
+NUXT_PUBLIC_AUTH_WORKER_URL = "https://auth.mtamaramu.com"
 
 [env.preview]
 # preview環境: rust-logi検証用
@@ -22,3 +23,4 @@ service = "cf-grpc-proxy"
 
 [env.preview.vars]
 NUXT_PUBLIC_API_BACKEND = "rust-logi"
+NUXT_PUBLIC_AUTH_WORKER_URL = "https://auth.mtamaramu.com"

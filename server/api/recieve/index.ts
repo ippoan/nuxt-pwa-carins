@@ -27,11 +27,18 @@ export default defineEventHandler(async (event) => {
 
             const blobBase64 = Buffer.from(multi.data).toString('base64')
             const targetUrl = 'https://cf-grpc-proxy.workers.dev/logi.files.FilesService/CreateFile'
+
+            // Cookie から JWT を取得（share_target フォーム POST にはカスタムヘッダーが付かないため）
+            const cookieHeader = getHeader(event, 'cookie') || ''
+            const tokenMatch = cookieHeader.match(/logi_auth_token=([^;]+)/)
+            const authToken = tokenMatch ? tokenMatch[1] : null
+
             const response = await cloudflare.env.GRPC_PROXY_SERVICE.fetch(targetUrl, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'Connect-Protocol-Version': '1',
+                    ...(authToken ? { 'x-auth-token': authToken } : {}),
                 },
                 body: JSON.stringify({
                     filename: multi.filename || 'unnamed',
