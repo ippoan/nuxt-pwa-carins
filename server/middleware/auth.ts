@@ -9,6 +9,13 @@
  * - lw_domain cookie → 次回以降も自動ログイン
  * - ?lw_callback → OAuth コールバック戻り（リダイレクトスキップ）
  */
+
+/** ホスト名から親ドメインを取得（cross-subdomain cookie 用） */
+function getParentDomainFromHost(hostname: string): string | undefined {
+  const parts = hostname.split('.')
+  return parts.length > 2 ? '.' + parts.slice(-2).join('.') : undefined
+}
+
 export default defineEventHandler((event) => {
   const config = useRuntimeConfig()
   const backend = config.public.apiBackend as string
@@ -31,6 +38,7 @@ export default defineEventHandler((event) => {
     const lwDomain = url.searchParams.get('lw')
     if (lwDomain) {
       setCookie(event, 'lw_domain', lwDomain, {
+        domain: getParentDomainFromHost(url.hostname),
         path: '/',
         maxAge: 30 * 24 * 60 * 60,
         secure: true,
@@ -47,6 +55,7 @@ export default defineEventHandler((event) => {
   if (lwDomain) {
     // ドメインを cookie に保存（30日間）次回以降の自動ログイン用
     setCookie(event, 'lw_domain', lwDomain, {
+      domain: getParentDomainFromHost(url.hostname),
       path: '/',
       maxAge: 30 * 24 * 60 * 60,
       secure: true,

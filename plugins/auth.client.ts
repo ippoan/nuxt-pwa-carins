@@ -74,7 +74,8 @@ export default defineNuxtPlugin({
                   const expiresAt = Math.floor(new Date(data.expiresAt).getTime() / 1000)
                   authState.value = { token: data.token, orgId: data.orgId, expiresAt }
                   localStorage.setItem('logi_auth', JSON.stringify(authState.value))
-                  document.cookie = `logi_auth_token=${data.token}; path=/; max-age=86400; secure; samesite=lax`
+                  const _pd = (() => { const p = window.location.hostname.split('.'); return p.length > 2 ? '.' + p.slice(-2).join('.') : window.location.hostname })()
+                  document.cookie = `logi_auth_token=${data.token}; Domain=${_pd}; path=/; max-age=86400; secure; samesite=lax`
                   // URL クリーンアップ
                   history.replaceState(null, '', window.location.pathname)
                   return
