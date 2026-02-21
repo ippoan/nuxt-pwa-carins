@@ -12,7 +12,7 @@
       <div v-if="$pwa?.needRefresh">
         <UButton @click="$pwa?.updateServiceWorker">再インストール</UButton>
       </div>
-      <UButton color="gray" @click="handleLogout" class="ml-auto">Logout</UButton>
+      <AuthToolbar class="ml-auto" />
     </div>
     <!-- <div>$pwa:{{ $pwa }}</div>
     <div>$pwa?.isPWAInstalled:{{ $pwa?.isPWAInstalled }}</div>
@@ -25,6 +25,7 @@
   </div>
 </template>
 <script setup lang="ts">
+import { AuthToolbar } from '@yhonda-ohishi-pub-dev/auth-client'
 import { useFileSystemAccess } from "@vueuse/core";
 declare var window: Window;
 interface Window {
@@ -44,10 +45,6 @@ interface LaunchParams {
 }
 interface FileSystemHandle {
   getFile(): Promise<File>;
-}
-const { logout } = useAuth()
-function handleLogout() {
-  logout()
 }
 const show = ref(false);
 
