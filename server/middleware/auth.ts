@@ -26,21 +26,8 @@ export default defineEventHandler((event) => {
   // OAuth コールバック戻り — クライアント JS に #fragment 処理を任せる
   if (url.searchParams.has('lw_callback')) return
 
-  // WOFF container — クライアントサイドで WOFF SDK 認証を行う
-  if (url.searchParams.has('woff')) {
-    const lwDomain = url.searchParams.get('lw')
-    if (lwDomain) {
-      setCookie(event, 'lw_domain', lwDomain, {
-        path: '/',
-        maxAge: 30 * 24 * 60 * 60,
-        secure: true,
-        sameSite: 'lax',
-      })
-    }
-    return
-  }
-
   // redirect_uri に lw_callback マーカー付与（リダイレクトループ防止）
+  // ?woff 付きでも通常の OAuth フローで認証（認証後にクライアントが WOFF SDK を試行）
   const redirectUri = `${url.origin}/?lw_callback=1`
 
   // ?lw=<domain> パラメータ — LINE WORKS 自動ログイン（Bot リンク/ブックマーク）
