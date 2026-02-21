@@ -7,26 +7,77 @@
  * LINE WORKS 自動ログイン:
  * ?lw=<domain> パラメータを検出してドメインを保存し、
  * redirectToLogin() が LINE WORKS OAuth を直接開始する
+ *
+ * WOFF SDK 認証:
+ * ?woff&lw=<domain> → DB から woff_id を解決 → woff.init() → JWT 取得
+ * WOFF コンテナ外では OAuth フローにフォールバック
  */
 export default defineNuxtPlugin({
   name: 'auth',
   enforce: 'pre',
-  setup() {
+  async setup() {
     const config = useRuntimeConfig()
     const backend = config.public.apiBackend as string
 
     // rust-logi 以外では何もしない
     if (backend !== 'rust-logi') return
 
-    const { consumeFragment, loadFromStorage, isAuthenticated, redirectToLogin, authState, saveLwDomain } = useAuth()
+    const { consumeFragment, loadFromStorage, isAuthenticated, redirectToLogin, authState, saveLwDomain, getLwDomain } = useAuth()
 
     // 0. ?lw=<domain> パラメータ → LINE WORKS ドメイン保存
     const urlParams = new URLSearchParams(window.location.search)
     const lwParam = urlParams.get('lw')
     if (lwParam) {
       saveLwDomain(lwParam)
-      // URL からパラメータを除去
+    }
+
+    // 0.5. ?woff → WOFF SDK 認証を試行
+    if (urlParams.has('woff') && typeof woff !== 'undefined') {
+      const domain = lwParam || getLwDomain()
+      if (domain) {
+        try {
+          const authWorkerUrl = config.public.authWorkerUrl as string
+          // DB から WOFF ID を解決
+          const configRes = await fetch(`${authWorkerUrl}/auth/woff-config?domain=${encodeURIComponent(domain)}`)
+          if (configRes.ok) {
+            const configData = await configRes.json() as { woffId: string }
+            await woff.init({ woffId: configData.woffId })
+            if (woff.isInClient()) {
+              const accessToken = woff.getAccessToken()
+              if (accessToken) {
+                const profile = await woff.getProfile()
+                const authRes = await fetch(`${authWorkerUrl}/auth/woff`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    accessToken,
+                    domainId: profile.domainId,
+                    redirectUri: window.location.origin,
+                  }),
+                })
+                if (authRes.ok) {
+                  const data = await authRes.json() as { token: string; expiresAt: string; orgId: string }
+                  const expiresAt = Math.floor(new Date(data.expiresAt).getTime() / 1000)
+                  authState.value = { token: data.token, orgId: data.orgId, expiresAt }
+                  localStorage.setItem('logi_auth', JSON.stringify(authState.value))
+                  document.cookie = `logi_auth_token=${data.token}; path=/; max-age=86400; secure; samesite=lax`
+                  // URL クリーンアップ
+                  history.replaceState(null, '', window.location.pathname)
+                  return
+                }
+              }
+            }
+          }
+        } catch (e) {
+          console.warn('WOFF auth failed, falling back to OAuth', e)
+        }
+      }
+    }
+
+    // ?lw パラメータを URL から除去
+    if (lwParam) {
       urlParams.delete('lw')
+      urlParams.delete('woff')
       const newSearch = urlParams.toString()
       const cleanUrl = window.location.pathname + (newSearch ? `?${newSearch}` : '') + window.location.hash
       history.replaceState(null, '', cleanUrl)

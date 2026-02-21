@@ -81,6 +81,9 @@ export default defineNuxtConfig({
         { rel: 'icon', href: `/favicon.ico`, sizes: "48x48" },
         { rel: 'apple-touch-icon', href: `/apple-touch-icon-180x180.png` },
       ],
+      script: [
+        { src: 'https://static.worksmobile.net/static/wm/woff/edge/3.6/sdk.js' },
+      ],
     },
   },
   apiParty: {
@@ -167,9 +170,9 @@ export default defineNuxtConfig({
         }
       ],
     },
-    workbox: { // なんか必要
+    workbox: {
       navigateFallback: null,
-      globPatterns: ['**/*.{js,css,html,ico,png,svg}'] //https://vite-pwa-org.netlify.app/guide/service-worker-precache.html
+      globPatterns: ['**/*.{js,css,ico,png,svg}'], // htmlはSSRなのでprecache対象外
     },
     devOptions: { // テスト用
       enabled: true,
