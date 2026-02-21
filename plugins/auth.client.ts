@@ -9,9 +9,22 @@
  * redirectToLogin() が LINE WORKS OAuth を直接開始する
  *
  * WOFF SDK 認証:
- * ?woff&lw=<domain> → DB から woff_id を解決 → woff.init() → JWT 取得
- * WOFF コンテナ外では OAuth フローにフォールバック
+ * ?woff&lw=<domain> → WOFF SDK 動的ロード → DB から woff_id 解決 → JWT 取得
+ * WOFF コンテナ外 or WOFF ID 未設定時は OAuth フローにフォールバック
  */
+
+/** WOFF SDK を動的にロード */
+function loadWoffSdk(): Promise<void> {
+  return new Promise((resolve, reject) => {
+    if (typeof woff !== 'undefined') { resolve(); return }
+    const script = document.createElement('script')
+    script.src = 'https://static.worksmobile.net/static/wm/woff/edge/3.6/sdk.js'
+    script.onload = () => resolve()
+    script.onerror = () => reject(new Error('Failed to load WOFF SDK'))
+    document.head.appendChild(script)
+  })
+}
+
 export default defineNuxtPlugin({
   name: 'auth',
   enforce: 'pre',
@@ -31,8 +44,8 @@ export default defineNuxtPlugin({
       saveLwDomain(lwParam)
     }
 
-    // 0.5. ?woff → WOFF SDK 認証を試行
-    if (urlParams.has('woff') && typeof woff !== 'undefined') {
+    // 0.5. ?woff → WOFF SDK を動的ロードして認証を試行
+    if (urlParams.has('woff')) {
       const domain = lwParam || getLwDomain()
       if (domain) {
         try {
@@ -41,6 +54,8 @@ export default defineNuxtPlugin({
           const configRes = await fetch(`${authWorkerUrl}/auth/woff-config?domain=${encodeURIComponent(domain)}`)
           if (configRes.ok) {
             const configData = await configRes.json() as { woffId: string }
+            // WOFF SDK をオンデマンドでロード
+            await loadWoffSdk()
             await woff.init({ woffId: configData.woffId })
             if (woff.isInClient()) {
               const accessToken = woff.getAccessToken()
@@ -72,12 +87,15 @@ export default defineNuxtPlugin({
           console.warn('WOFF auth failed, falling back to OAuth', e)
         }
       }
-    }
-
-    // ?lw パラメータを URL から除去
-    if (lwParam) {
-      urlParams.delete('lw')
+      // WOFF 認証失敗 → ?woff を除去して通常 OAuth フローへ
       urlParams.delete('woff')
+      urlParams.delete('lw')
+      const newSearch = urlParams.toString()
+      const cleanUrl = window.location.pathname + (newSearch ? `?${newSearch}` : '') + window.location.hash
+      history.replaceState(null, '', cleanUrl)
+    } else if (lwParam) {
+      // ?lw パラメータのみの場合は URL から除去
+      urlParams.delete('lw')
       const newSearch = urlParams.toString()
       const cleanUrl = window.location.pathname + (newSearch ? `?${newSearch}` : '') + window.location.hash
       history.replaceState(null, '', cleanUrl)

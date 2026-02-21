@@ -81,9 +81,6 @@ export default defineNuxtConfig({
         { rel: 'icon', href: `/favicon.ico`, sizes: "48x48" },
         { rel: 'apple-touch-icon', href: `/apple-touch-icon-180x180.png` },
       ],
-      script: [
-        { src: 'https://static.worksmobile.net/static/wm/woff/edge/3.6/sdk.js' },
-      ],
     },
   },
   apiParty: {
