@@ -35,7 +35,7 @@ export default defineNuxtPlugin({
     // rust-logi 以外では何もしない
     if (backend !== 'rust-logi') return
 
-    const { consumeFragment, loadFromStorage, isAuthenticated, redirectToLogin, authState, saveLwDomain, getLwDomain } = useAuth()
+    const { consumeFragment, loadFromStorage, recoverFromCookie, isAuthenticated, redirectToLogin, authState, saveLwDomain, getLwDomain } = useAuth()
 
     // 0. ?lw=<domain> パラメータ → LINE WORKS ドメイン保存
     const urlParams = new URLSearchParams(window.location.search)
@@ -124,29 +124,9 @@ export default defineNuxtPlugin({
       loadFromStorage()
     }
 
-    // 2.5. Cookie からの復旧（LINE WORKS アプリ内ブラウザが hash fragment を上書きする対策）
-    // auth-worker が Set-Cookie で JWT をセット済み → cookie から認証状態を復元
+    // 2.5. Cookie からの復旧（トップページや他アプリで認証済みの場合）
     if (!isAuthenticated.value) {
-      const tokenCookie = document.cookie.split('; ').find(c => c.startsWith('logi_auth_token='))
-      if (tokenCookie) {
-        const token = tokenCookie.split('=').slice(1).join('=')
-        try {
-          const payload = JSON.parse(atob(token.split('.')[1]))
-          const state = { token, orgId: payload.org, expiresAt: payload.exp }
-          authState.value = state
-          localStorage.setItem('logi_auth', JSON.stringify(state))
-          // lw_domain cookie → localStorage 同期
-          const lwCookie = document.cookie.split('; ').find(c => c.startsWith('lw_domain='))
-          if (lwCookie) {
-            const domain = decodeURIComponent(lwCookie.split('=')[1] || '')
-            if (domain) saveLwDomain(domain)
-          }
-          // URL クリーンアップ
-          history.replaceState(null, '', window.location.pathname)
-        } catch {
-          // JWT decode failed — ignore
-        }
-      }
+      recoverFromCookie()
     }
 
     // 3. 未認証 → ログイン画面へ（redirectToLogin 内で lw_domain をチェック）
