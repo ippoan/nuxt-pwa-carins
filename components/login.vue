@@ -12,6 +12,7 @@
       <div v-if="$pwa?.needRefresh">
         <UButton @click="$pwa?.updateServiceWorker">再インストール</UButton>
       </div>
+      <UButton color="gray" @click="handleLogout" class="ml-auto">Logout</UButton>
     </div>
     <!-- <div>$pwa:{{ $pwa }}</div>
     <div>$pwa?.isPWAInstalled:{{ $pwa?.isPWAInstalled }}</div>
@@ -43,6 +44,10 @@ interface LaunchParams {
 }
 interface FileSystemHandle {
   getFile(): Promise<File>;
+}
+const { logout } = useAuth()
+function handleLogout() {
+  logout()
 }
 const show = ref(false);
 
