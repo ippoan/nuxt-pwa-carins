@@ -2035,6 +2035,11 @@
   dependencies:
     vue "^3.5.13"
 
+"@yhonda-ohishi-pub-dev/auth-client@^0.1.0":
+  version "0.1.0"
+  resolved "https://npm.pkg.github.com/download/@yhonda-ohishi-pub-dev/auth-client/0.1.0/8ecbf169c46e0474e5d5d4d33e8efd5f3f64ca78"
+  integrity sha512-FQ2pJtrjuaDBNwAbNw5MYJUcxTIEhnwQ+8A1GRV5Mc2GYat1zpopN4XDHRGKGzKj9+CAC6ek5FJ2mOlAz0y26w==
+
 "@yhonda-ohishi-pub-dev/logi-proto@^0.1.32":
   version "0.1.32"
   resolved "https://npm.pkg.github.com/download/@yhonda-ohishi-pub-dev/logi-proto/0.1.32/88bab4853fe3b5be3c3f3a797eb99680345d1e7c"
@@ -5384,7 +5389,7 @@ nuxt-api-party@2.1.2:
     scule "^1.3.0"
     ufo "^1.5.4"
 
-nuxt@^3.0.0, nuxt@^3.15.1:
+nuxt@^3.0.0, nuxt@^3.15.1, nuxt@>=3.0.0:
   version "3.15.1"
   resolved "https://registry.npmjs.org/nuxt/-/nuxt-3.15.1.tgz"
   integrity sha512-8sKgqjhu5JoaVv89TnBW5S0jvsXRrEWGF+CguYUPK+6sRAtNcJAwcWxd4pEmURYQ2D0jjdfgr/VyH0i9CdhkBQ==
@@ -7893,7 +7898,7 @@ vue-router@^4.4.0, vue-router@^4.5.0, vue-router@latest:
   dependencies:
     "@vue/devtools-api" "^6.6.4"
 
-"vue@^2.7.0 || ^3.0.0", "vue@^2.7.0 || ^3.2.25", vue@^3.0.0, vue@^3.2.0, vue@^3.2.25, vue@^3.3.4, vue@^3.5.13, "vue@>=2.7 || >=3", vue@>=3, vue@3.5.13, vue@latest:
+"vue@^2.7.0 || ^3.0.0", "vue@^2.7.0 || ^3.2.25", vue@^3.0.0, vue@^3.2.0, vue@^3.2.25, vue@^3.3.4, vue@^3.5.13, "vue@>=2.7 || >=3", vue@>=3, vue@>=3.0.0, vue@3.5.13, vue@latest:
   version "3.5.13"
   resolved "https://registry.npmjs.org/vue/-/vue-3.5.13.tgz"
   integrity sha512-wmeiSMxkZCSc+PM2w2VRsOYAZC8GdipNFRTsLSfodVqI9mbejKeXEGr8SckuLnrQPGe3oJN5c3K0vpoU9q/wCQ==
