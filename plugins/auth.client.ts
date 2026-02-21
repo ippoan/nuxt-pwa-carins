@@ -60,13 +60,12 @@ export default defineNuxtPlugin({
             if (woff.isInClient()) {
               const accessToken = woff.getAccessToken()
               if (accessToken) {
-                const profile = await woff.getProfile()
                 const authRes = await fetch(`${authWorkerUrl}/auth/woff`, {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify({
                     accessToken,
-                    domainId: profile.domainId,
+                    domainId: domain,
                     redirectUri: window.location.origin,
                   }),
                 })
@@ -123,6 +122,31 @@ export default defineNuxtPlugin({
     if (!foundInFragment) {
       // 2. localStorage から復元
       loadFromStorage()
+    }
+
+    // 2.5. Cookie からの復旧（LINE WORKS アプリ内ブラウザが hash fragment を上書きする対策）
+    // auth-worker が Set-Cookie で JWT をセット済み → cookie から認証状態を復元
+    if (!isAuthenticated.value) {
+      const tokenCookie = document.cookie.split('; ').find(c => c.startsWith('logi_auth_token='))
+      if (tokenCookie) {
+        const token = tokenCookie.split('=').slice(1).join('=')
+        try {
+          const payload = JSON.parse(atob(token.split('.')[1]))
+          const state = { token, orgId: payload.org, expiresAt: payload.exp }
+          authState.value = state
+          localStorage.setItem('logi_auth', JSON.stringify(state))
+          // lw_domain cookie → localStorage 同期
+          const lwCookie = document.cookie.split('; ').find(c => c.startsWith('lw_domain='))
+          if (lwCookie) {
+            const domain = decodeURIComponent(lwCookie.split('=')[1] || '')
+            if (domain) saveLwDomain(domain)
+          }
+          // URL クリーンアップ
+          history.replaceState(null, '', window.location.pathname)
+        } catch {
+          // JWT decode failed — ignore
+        }
+      }
     }
 
     // 3. 未認証 → ログイン画面へ（redirectToLogin 内で lw_domain をチェック）
