@@ -35,7 +35,7 @@ export default defineNuxtPlugin({
     // rust-logi 以外では何もしない
     if (backend !== 'rust-logi') return
 
-    const { consumeFragment, loadFromStorage, recoverFromCookie, isAuthenticated, redirectToLogin, authState, saveLwDomain, getLwDomain } = useAuth()
+    const { consumeFragment, loadFromStorage, recoverFromCookie, isAuthenticated, redirectToLogin, authState, saveLwDomain, getLwDomain, fetchOrganizations } = useAuth()
 
     // 0. ?lw=<domain> パラメータ → LINE WORKS ドメイン保存
     const urlParams = new URLSearchParams(window.location.search)
@@ -136,7 +136,10 @@ export default defineNuxtPlugin({
       return
     }
 
-    // 4. 認証済み → 期限切れタイマーを設定
+    // 4. 認証済み → 組織一覧を取得（複数組織対応）
+    fetchOrganizations()
+
+    // 5. 期限切れタイマーを設定
     const setupExpiryTimer = () => {
       const state = authState.value
       if (!state) return
