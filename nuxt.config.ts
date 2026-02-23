@@ -12,7 +12,7 @@ export default defineNuxtConfig({
   // ssr:  true,
   // target: "static",
   nitro:{
-    // preset:"cloudflare-pages",
+    preset: "cloudflare-module",
     prerender: {
       autoSubfolderIndex: false
     }
