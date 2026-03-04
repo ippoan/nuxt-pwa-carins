@@ -15,7 +15,7 @@ type FilesClient = Client<typeof FilesService>
 export default defineNuxtPlugin(() => {
   const { token } = useAuth()
 
-  // JWT を x-auth-token ヘッダーとして付与
+  // JWT ヘッダーを付与
   const authInterceptor: Interceptor = (next) => async (req) => {
     if (token.value) {
       req.header.set('x-auth-token', token.value)

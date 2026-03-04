@@ -37,7 +37,6 @@ export default defineEventHandler(async (event) => {
   if (authToken) headers.set('x-auth-token', authToken)
   const orgId = getHeader(event, 'x-organization-id')
   if (orgId) headers.set('x-organization-id', orgId)
-
   // リクエストボディを取得（バイナリとして読み込む）
   const body = method === 'POST' ? await readRawBody(event, false) : undefined
 
