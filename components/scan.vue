@@ -60,8 +60,28 @@ function connectBridge() {
   }
 }
 
+function cancelScan() {
+  status.value = 'def'
+  if (ws) {
+    ws.close()
+    ws = null
+  }
+  if (ndefAbort) {
+    ndefAbort.abort()
+    ndefAbort = null
+  }
+}
+
+let ndefAbort: AbortController | null = null
+
 async function scan() {
   if (!nfcSupported.value) return
+
+  // タッチ待ち中に押したらキャンセル
+  if (status.value === 'scanning') {
+    cancelScan()
+    return
+  }
 
   if (hasAndroidBridge.value) {
     // Android WebSocket Bridge — NFC はネイティブ側で常時待ち受け
@@ -79,7 +99,8 @@ async function scan() {
       type.value = ''
       timestamp.value = ''
 
-      await ndef.scan()
+      ndefAbort = new AbortController()
+      await ndef.scan({ signal: ndefAbort.signal })
       status.value = 'scanning'
 
       ndef.onreadingerror = (event: any) => {
@@ -124,13 +145,12 @@ onUnmounted(() => {
     </UButton>
     <UButton
       v-else
-      @click="scan"
+      @click="cancelScan"
       color="orange"
       size="lg"
       block
-      loading
     >
-      タッチ待ち...
+      キャンセル
     </UButton>
   </div>
 </template>
