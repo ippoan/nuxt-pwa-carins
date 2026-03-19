@@ -7,10 +7,11 @@
 
 import { createClient, type Client, type Interceptor } from '@connectrpc/connect'
 import { createGrpcWebTransport } from '@connectrpc/connect-web'
-import { CarInspectionService, FilesService } from '@yhonda-ohishi-pub-dev/logi-proto'
+import { CarInspectionService, FilesService, NfcTagService } from '@yhonda-ohishi-pub-dev/logi-proto'
 
 type CarInspectionClient = Client<typeof CarInspectionService>
 type FilesClient = Client<typeof FilesService>
+type NfcTagClient = Client<typeof NfcTagService>
 
 export default defineNuxtPlugin(() => {
   const { token } = useAuth()
@@ -30,12 +31,14 @@ export default defineNuxtPlugin(() => {
 
   const carInspectionClient: CarInspectionClient = createClient(CarInspectionService, transport)
   const filesClient: FilesClient = createClient(FilesService, transport)
+  const nfcTagClient: NfcTagClient = createClient(NfcTagService, transport)
 
   return {
     provide: {
       grpc: {
         carInspections: carInspectionClient,
         files: filesClient,
+        nfcTags: nfcTagClient,
       },
     },
   }
@@ -46,6 +49,7 @@ declare module '#app' {
     $grpc: {
       carInspections: CarInspectionClient
       files: FilesClient
+      nfcTags: NfcTagClient
     }
   }
 }
@@ -55,6 +59,7 @@ declare module 'vue' {
     $grpc: {
       carInspections: CarInspectionClient
       files: FilesClient
+      nfcTags: NfcTagClient
     }
   }
 }

@@ -8,7 +8,7 @@
     <NuxtPwaManifest />
     <NuxtLoadingIndicator />
     <Login />
-    <List />
+    <NuxtPage />
     <!-- <NuxtRouteAnnouncer />
     <NuxtWelcome /> -->
   </div>

@@ -13,36 +13,27 @@
             </div>
         </div>
         <div>
-            <Scan BtnName="Scan" v-model:serial="serial" v-model:type="type" v-model:timestamp="timestamp" />
-            <div>
-                serial:{{ serial }}
 
-            </div>
-
-
-
-            <div v-if="RecentData">
-                {{ RecentStatus }}
-                <UTable :rows="RecentData" :key="RecentStatus" :loading="RecentStatus === 'pending'">
+            <details v-if="RecentData" class="mb-2">
+                <summary class="cursor-pointer text-sm">最近のファイル ({{ Math.min(RecentData.length, 20) }})</summary>
+                <UTable :rows="RecentData.slice(0, 20)" :key="RecentStatus" :loading="RecentStatus === 'pending'">
                     <template #uuid-data="{ row }">
                         <ButtonDownload :uuid="row.uuid" :filename="row.filename" />
                     </template>
                 </UTable>
-            </div>
+            </details>
 
             <div v-if="data !== null" class="grid-row-3 mx-auto">
 
-                <UButton to="https://www.e-shaken.mlit.go.jp/etsuran01">車検証アプリを開く</UButton>
                 <UInput placeholder="Search..." v-model="q"></UInput>
 
-                <UButton @click="refreshData"> 更新</UButton> {{ status }} {{ refCount }}
                 <!-- <UTable :rows="filteredRows" :sort="{column:'EntryNoCarNo',direction:'asc'}" :columns="Columns" @select="select" :ui="{ -->
                 <UTable :rows="filteredRows" :sort="sort" :columns="Columns" @select="select" :key="status"
-                    :loading="status === 'pending'" :ui="{
+                    :loading="status === 'pending'" class="sticky-cols" :ui="{
 
                         base: ' border-separate border-spacing-0 min-w-fit mx-auto',
                         // wrapper: 'h-[50vh] border border-white',
-                        wrapper: 'border border-white',
+                        wrapper: 'border border-white overflow-x-auto',
                         tr: {
                             active: 'hover:bg-gray-200 dark:hover:bg-gray-100/50 cursor-pointer'
                         },
@@ -66,7 +57,7 @@
                     </template>
 
                     <template #EntryNoCarNo-data="{ row }">
-                        <CarInsCarName :EntryNoCarNo="row.EntryNoCarNo" />
+                        {{ toHalfWidth(row.EntryNoCarNo) }}
                     </template>
                     <template #Firstregistdate-data="{ row }">
                         <CarInsFirstregistdate :row="row" />
@@ -120,6 +111,12 @@
 
 </template>
 <script setup lang="ts">
+
+/** 全角英数→半角、全角スペース→半角スペース */
+function toHalfWidth(s: string): string {
+    return s.replace(/[\uff01-\uff5e]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xfee0))
+            .replace(/\u3000/g, ' ')
+}
 
 function makeSt(row: components["schemas"]["carInspectionSchema"]) {
     return row.TwodimensionCodeInfoValidPeriodExpirdate + "_" + row.TwodimensionCodeInfoEntryNoCarNo + "_" + row.ElectCertPublishdateE + row.ElectCertPublishdateY + "年" + ("00" + row.ElectCertPublishdateM).slice(-2) + "月" + ("00" + row.ElectCertPublishdateD).slice(-2) + "日発行"
@@ -223,7 +220,8 @@ const Columns = [
     // { label: "車両番号", key: "TwodimensionCodeInfoCarNo", sortable: true },
     // { label: "車両番号", key: "TwodimensionCodeInfoModelSpecifyNoClassifyAroundNo", sortable: true },
     // { label: "車両番号", key: "TwodimensionCodeInfoCarNoStampPlace", sortable: true },
-    { label: "車両番号", key: "EntryNoCarNo", sortable: true },
+    { label: "", key: "actions" },
+    { label: "車番", key: "EntryNoCarNo", sortable: true },
     { label: "有効期限", key: "TwodimensionCodeInfoValidPeriodExpirdate", sortable: true },
     { label: "所有者", key: "OwnernameLowLevelChar" },
     { label: "使用者", key: "UsernameLowLevelChar" },
@@ -237,7 +235,6 @@ const Columns = [
     { label: "車体形状", key: "CarShape" },
     { label: "所度登録", key: "Firstregistdate" },
     { label: "備考", key: "NoteInfo" },
-    { label: "pdf", key: "actions" },
     { label: "pdf", key: "pdfUuid" },
     { label: "json", key: "jsonUuid" },
 ]
@@ -295,3 +292,38 @@ const filteredRows = computed(() => {
 });
 
 </script>
+
+<style scoped>
+/* 1列目(表示ボタン) を sticky left 固定 */
+.sticky-cols :deep(td:nth-child(1)),
+.sticky-cols :deep(th:nth-child(1)) {
+    position: sticky;
+    left: 0;
+    z-index: 20;
+}
+/* 2列目(車両番号) を sticky left 固定（1列目の幅分オフセット） */
+.sticky-cols :deep(td:nth-child(2)),
+.sticky-cols :deep(th:nth-child(2)) {
+    position: sticky;
+    left: 36px;
+    z-index: 20;
+}
+/* 背景色を明示（透過防止） */
+.sticky-cols :deep(td:nth-child(1)),
+.sticky-cols :deep(td:nth-child(2)) {
+    background: #111 !important;
+}
+:root.light .sticky-cols :deep(td:nth-child(1)),
+:root.light .sticky-cols :deep(td:nth-child(2)),
+@media (prefers-color-scheme: light) {
+    .sticky-cols :deep(td:nth-child(1)),
+    .sticky-cols :deep(td:nth-child(2)) {
+        background: #fff !important;
+    }
+}
+/* sticky top+left の角セル（ヘッダー） */
+.sticky-cols :deep(th:nth-child(1)),
+.sticky-cols :deep(th:nth-child(2)) {
+    z-index: 40;
+}
+</style>

@@ -1,27 +1,23 @@
 <template>
   <div v-if="show">
-    <div class="flex">
-      <UButton to="/" class="mr-1">更新</UButton>
-      <div v-if="isSupported">
-        <UButton @click="res.open()" class="mr-1">Open</UButton>
-        <!-- test -->
+    <div class="flex items-center gap-1">
+      <UButton @click="() => window.location.reload()" size="md">更新</UButton>
+      <UButton v-if="isSupported" @click="res.open()" size="md" class="hidden md:inline-flex">Open</UButton>
+      <UButton v-if="!$pwa?.isPWAInstalled" @click="installApp" size="md">インストール</UButton>
+      <UButton v-if="$pwa?.needRefresh" @click="$pwa?.updateServiceWorker" size="md">再インストール</UButton>
+      <UButton to="/nfc" size="md" color="sky">NFC</UButton>
+      <!-- PC: inline -->
+      <AuthToolbar class="ml-auto hidden md:flex" />
+      <!-- Mobile: hamburger -->
+      <div class="ml-auto relative md:hidden">
+        <UButton size="md" color="gray" @click="menuOpen = !menuOpen">☰</UButton>
+        <div v-if="menuOpen" class="absolute right-0 top-full mt-1 bg-white dark:bg-gray-800 border dark:border-gray-700 rounded shadow-lg z-50 min-w-[200px] py-1">
+          <a href="https://www.e-shaken.mlit.go.jp/etsuran01" target="_blank"
+            class="block w-full px-3 py-1.5 text-sm text-left hover:bg-gray-100 dark:hover:bg-gray-700">車検証アプリを開く</a>
+          <AuthToolbar class="flex flex-col items-stretch [&>*]:w-full [&>*]:justify-start [&>*]:px-3 [&>*]:py-1.5 [&>*]:text-sm [&>*]:rounded-none [&>button]:hover:bg-gray-100 [&>button]:dark:hover:bg-gray-700" />
+        </div>
       </div>
-      <div v-if="!$pwa?.isPWAInstalled">
-        <UButton @click="installApp">インストール</UButton>
-      </div>
-      <div v-if="$pwa?.needRefresh">
-        <UButton @click="$pwa?.updateServiceWorker">再インストール</UButton>
-      </div>
-      <AuthToolbar class="ml-auto" />
     </div>
-    <!-- <div>$pwa:{{ $pwa }}</div>
-    <div>$pwa?.isPWAInstalled:{{ $pwa?.isPWAInstalled }}</div>
-    index
-    {{ res }}
-    <div>fileRef:{{ fileRef }}</div> -->
-    <div>uuid:{{ uuid }}</div>
-    <div>message:{{ message }}</div>
-    <!-- <div>route.params:{{ route.params }}</div> -->
   </div>
 </template>
 <script setup lang="ts">
@@ -47,6 +43,7 @@ interface FileSystemHandle {
   getFile(): Promise<File>;
 }
 const show = ref(false);
+const menuOpen = ref(false);
 
 const fileRef = ref();
 
@@ -115,6 +112,13 @@ onMounted(() => {
   }
   show.value = true;
 });
+function closeMenu(e: MouseEvent) {
+  const target = e.target as HTMLElement
+  if (!target.closest('.relative')) menuOpen.value = false
+}
+onMounted(() => document.addEventListener('click', closeMenu))
+onUnmounted(() => document.removeEventListener('click', closeMenu))
+
 const route = useRoute();
 const uuid = ref(route.query.uuid);
 const message = ref(route.query.message);
