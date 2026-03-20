@@ -1,6 +1,6 @@
 <script setup lang="ts">
 const { searchByNfcUuid, registerNfcTag, listNfcTags } = useNfcTag()
-const { $grpc } = useNuxtApp()
+const { token } = useAuth()
 
 // NFC scan state
 const serial = ref('')
@@ -29,11 +29,13 @@ async function loadAll() {
   loading.value = true
   try {
     const [inspRes, tagsRes] = await Promise.all([
-      $grpc.carInspections.listCurrentCarInspections({}),
+      $fetch<{ car_inspections: any[] }>('/api/proxy/car-inspections/current', {
+        headers: token.value ? { Authorization: `Bearer ${token.value}` } : {},
+      }),
       listNfcTags(),
     ])
-    allInspections.value = inspRes.carInspections || []
-    taggedIds.value = new Set((tagsRes.nfcTags || []).map((t: any) => t.carInspectionId))
+    allInspections.value = inspRes?.carInspections || []
+    taggedIds.value = new Set((tagsRes as any[] || []).map((t: any) => t.carInspectionId))
   } catch (e: any) {
     errorMessage.value = e.message || 'Failed to load data'
   } finally {

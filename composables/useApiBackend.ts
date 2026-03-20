@@ -1,10 +1,5 @@
 /**
- * APIバックエンドの種類を判定するComposable
+ * APIバックエンド（固定: rust-alc-api REST）
+ * @deprecated 移行完了後に削除
  */
-
-export type ApiBackend = 'cloudflare' | 'cloudrun' | 'rust-logi';
-
-export const useApiBackend = (): ApiBackend => {
-  const config = useRuntimeConfig();
-  return (config.public.apiBackend as ApiBackend) || 'cloudflare';
-};
+export const useApiBackend = () => 'rust-alc-api' as const

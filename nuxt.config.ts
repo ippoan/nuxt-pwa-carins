@@ -18,7 +18,7 @@ export default defineNuxtConfig({
     }
   },
   build: {
-    transpile: ['@yhonda-ohishi-pub-dev/logi-proto', '@yhonda-ohishi-pub-dev/auth-client', '@bufbuild/protobuf', '@connectrpc/connect', '@connectrpc/connect-web'],
+    transpile: ['@yhonda-ohishi-pub-dev/auth-client'],
   },
   devServer: {
     host: '0.0.0.0',
@@ -31,16 +31,15 @@ export default defineNuxtConfig({
     // url:"https://uriage.ohishiunyusouko.com"
   },
   runtimeConfig: {
-    // Cloudflare設定（既存）
+    // rust-alc-api バックエンド URL
+    alcApiUrl: process.env.NUXT_ALC_API_URL || 'https://rust-alc-api-747065218280.asia-northeast1.run.app',
+    // Cloudflare設定（レガシー）
     cfId: process.env.NUXT_CF_ID,
     cfSecret: process.env.NUXT_CF_SECRET,
     cfServer: process.env.NUXT_CF_SERVER,
-    // Cloud Run設定（新規）
-    cloudrunUrl: process.env.NUXT_CLOUDRUN_URL,
-    gcpServiceAccountKey: process.env.NUXT_GCP_SERVICE_ACCOUNT_KEY,
     // パブリック設定
     public: {
-      apiBackend: process.env.API_BACKEND || 'cloudflare',
+      apiBackend: 'rust-alc-api',
       authWorkerUrl: process.env.NUXT_PUBLIC_AUTH_WORKER_URL || '',
     },
   },

@@ -32,8 +32,8 @@ export default defineNuxtPlugin({
     const config = useRuntimeConfig()
     const backend = config.public.apiBackend as string
 
-    // rust-logi 以外では何もしない
-    if (backend !== 'rust-logi') return
+    // rust-logi / rust-alc-api 以外では何もしない
+    if (backend !== 'rust-logi' && backend !== 'rust-alc-api') return
 
     const { consumeFragment, loadFromStorage, recoverFromCookie, isAuthenticated, redirectToLogin, authState, saveLwDomain, getLwDomain, fetchOrganizations } = useAuth()
 

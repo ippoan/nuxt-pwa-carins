@@ -13,25 +13,17 @@ command = "npm run build"
 enabled = true
 head_sampling_rate = 1
 
-# Service Binding: cf-grpc-proxyのDurable Objectに接続
-[[services]]
-binding = "GRPC_PROXY_SERVICE"
-service = "cf-grpc-proxy"
-
 [vars]
-NUXT_PUBLIC_API_BACKEND = "rust-logi"
+NUXT_PUBLIC_API_BACKEND = "rust-alc-api"
 NUXT_PUBLIC_AUTH_WORKER_URL = "https://auth.mtamaramu.com"
+NUXT_ALC_API_URL = "https://rust-alc-api-747065218280.asia-northeast1.run.app"
 
 [[routes]]
 pattern = "nuxt-pwa-carins.mtamaramu.com"
 custom_domain = true
 
 [env.preview]
-# preview環境: rust-logi検証用
-[[env.preview.services]]
-binding = "GRPC_PROXY_SERVICE"
-service = "cf-grpc-proxy"
-
 [env.preview.vars]
-NUXT_PUBLIC_API_BACKEND = "rust-logi"
+NUXT_PUBLIC_API_BACKEND = "rust-alc-api"
 NUXT_PUBLIC_AUTH_WORKER_URL = "https://auth.mtamaramu.com"
+NUXT_ALC_API_URL = "https://rust-alc-api-747065218280.asia-northeast1.run.app"

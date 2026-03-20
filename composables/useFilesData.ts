@@ -1,112 +1,53 @@
 /**
- * ファイルデータ取得Composable
- * Cloudflare (REST) と Cloud Run (gRPC) の両方に対応
+ * ファイルデータ取得 Composable
+ * rust-alc-api REST API 経由
  */
 
 interface FileData {
-  uuid: string;
-  filename: string;
-  type: string;
-  created: string;
-  deleted?: string;
-  blob?: string;
-  s3Key?: string;
-  storageClass?: string;
-  lastAccessedAt?: string;
+  uuid: string
+  filename: string
+  file_type: string
+  created: string
+  deleted?: string
+  s3_key?: string
+  storage_class?: string
+  last_accessed_at?: string
 }
 
 interface UseFilesDataOptions {
-  lazy?: boolean;
-  cache?: boolean;
-}
-
-/**
- * gRPCレスポンスからREST API互換形式に変換
- */
-function mapGrpcFileToSchema(grpc: Record<string, unknown>): FileData {
-  return {
-    uuid: grpc.uuid as string,
-    filename: grpc.filename as string,
-    type: grpc.type as string,
-    created: grpc.created as string,
-    deleted: grpc.deleted as string | undefined,
-    blob: grpc.blob as string | undefined,
-    s3Key: grpc.s3Key as string | undefined,
-    storageClass: grpc.storageClass as string | undefined,
-    lastAccessedAt: grpc.lastAccessedAt as string | undefined,
-  };
+  lazy?: boolean
 }
 
 /**
  * 最近アップロードされたファイル一覧を取得
  */
 export const useRecentFilesData = (options?: UseFilesDataOptions) => {
-  const backend = useApiBackend();
+  const { token } = useAuth()
 
-  if (backend === 'cloudflare') {
-    return useJsonPlaceholderData("/api/files/RecentUploaded", {
-      method: "GET",
-      lazy: options?.lazy ?? true,
-      cache: options?.cache ?? false,
-      transform: (v) => v ?? undefined,
-    });
-  } else if (backend === 'rust-logi') {
-    // rust-logi: ブラウザ側Connect RPC経由
-    const { $grpc } = useNuxtApp();
-    return useAsyncData('recentFiles', async () => {
-      const response = await $grpc.files.listRecentUploadedFiles({});
-      if (!response?.files) return undefined;
-      return response.files.map((f: Record<string, unknown>) => mapGrpcFileToSchema(f));
-    }, {
-      lazy: options?.lazy ?? true,
-      server: false,
-    });
-  } else {
-    return useFetch<FileData[]>('/api/grpc/files', {
-      method: 'POST',
-      body: { method: 'listRecentUploaded', params: {} },
-      lazy: options?.lazy ?? true,
-      transform: (response: { files?: Record<string, unknown>[] }) => {
-        if (!response?.files) return undefined;
-        return response.files.map(mapGrpcFileToSchema);
-      },
-    });
-  }
-};
+  return useAsyncData('recentFiles', async () => {
+    const res = await $fetch<{ files: FileData[] }>('/api/proxy/files/recent', {
+      headers: token.value ? { Authorization: `Bearer ${token.value}` } : {},
+    })
+    return res?.files
+  }, {
+    lazy: options?.lazy ?? true,
+    server: false,
+  })
+}
 
 /**
  * ファイル一覧を取得
  */
 export const useFilesData = (options?: UseFilesDataOptions) => {
-  const backend = useApiBackend();
+  const { token } = useAuth()
 
-  if (backend === 'cloudflare') {
-    return useJsonPlaceholderData("/api/files/list", {
-      method: "GET",
-      lazy: options?.lazy ?? true,
-      cache: options?.cache ?? false,
-      transform: (v) => v ?? undefined,
-    });
-  } else if (backend === 'rust-logi') {
-    // rust-logi: ブラウザ側Connect RPC経由
-    const { $grpc } = useNuxtApp();
-    return useAsyncData('filesList', async () => {
-      const response = await $grpc.files.listFiles({});
-      if (!response?.files) return undefined;
-      return response.files.map((f: Record<string, unknown>) => mapGrpcFileToSchema(f));
-    }, {
-      lazy: options?.lazy ?? true,
-      server: false,
-    });
-  } else {
-    return useFetch<FileData[]>('/api/grpc/files', {
-      method: 'POST',
-      body: { method: 'list', params: {} },
-      lazy: options?.lazy ?? true,
-      transform: (response: { files?: Record<string, unknown>[] }) => {
-        if (!response?.files) return undefined;
-        return response.files.map(mapGrpcFileToSchema);
-      },
-    });
-  }
-};
+  return useAsyncData('filesList', async () => {
+    const res = await $fetch<{ files: FileData[] }>('/api/proxy/files', {
+      headers: token.value ? { Authorization: `Bearer ${token.value}` } : {},
+    })
+    return res?.files
+  }, {
+    lazy: options?.lazy ?? true,
+    server: false,
+  })
+}

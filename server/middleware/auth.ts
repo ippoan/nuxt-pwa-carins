@@ -19,7 +19,7 @@ function getParentDomainFromHost(hostname: string): string | undefined {
 export default defineEventHandler((event) => {
   const config = useRuntimeConfig()
   const backend = config.public.apiBackend as string
-  if (backend !== 'rust-logi') return
+  if (backend !== 'rust-logi' && backend !== 'rust-alc-api') return
 
   const url = getRequestURL(event)
   if (url.pathname.startsWith('/api/')) return
