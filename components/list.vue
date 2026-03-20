@@ -71,7 +71,7 @@
                         </div>
                         <div v-else>
 
-                            <ButtonDownload :uuid="row.pdfUuid" :filename="makeSt(row)" />
+                            <ButtonDownload :uuid="row.pdfUuid" :filename="makeSt(row) + '.pdf'" />
                             <!-- {{ row.pdfUuid }} -->
                         </div>
                     </template>
@@ -82,7 +82,7 @@
                         </div>
                         <div v-else>
 
-                            <ButtonDownload :uuid="row.jsonUuid" :filename="makeSt(row)" />
+                            <ButtonDownload :uuid="row.jsonUuid" :filename="makeSt(row) + '.json'" />
                             <!-- {{ row.pdfUuid }} -->
                         </div>
                     </template>

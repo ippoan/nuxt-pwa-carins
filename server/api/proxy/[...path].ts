@@ -76,6 +76,12 @@ export default defineEventHandler(async (event) => {
 
   setResponseStatus(event, response.status)
 
+  // ダウンロードエンドポイント — 常にバイナリとして転送
+  if (path.includes('/download')) {
+    const buffer = await response.arrayBuffer()
+    return Buffer.from(buffer)
+  }
+
   // バイナリレスポンス（ダウンロード）の場合
   if (responseContentType && !responseContentType.includes('application/json')) {
     const buffer = await response.arrayBuffer()
