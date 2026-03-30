@@ -51,7 +51,7 @@ export default defineNuxtPlugin({
         try {
           const authWorkerUrl = config.public.authWorkerUrl as string
           // DB から WOFF ID を解決
-          const configRes = await fetch(`${authWorkerUrl}/auth/woff-config?domain=${encodeURIComponent(domain)}`)
+          const configRes = await fetch(`${authWorkerUrl}/api/auth/woff-config?domain=${encodeURIComponent(domain)}`)
           if (configRes.ok) {
             const configData = await configRes.json() as { woffId: string }
             // WOFF SDK をオンデマンドでロード
@@ -60,7 +60,7 @@ export default defineNuxtPlugin({
             if (woff.isInClient()) {
               const accessToken = woff.getAccessToken()
               if (accessToken) {
-                const authRes = await fetch(`${authWorkerUrl}/auth/woff`, {
+                const authRes = await fetch(`${authWorkerUrl}/api/auth/woff`, {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify({
@@ -70,9 +70,9 @@ export default defineNuxtPlugin({
                   }),
                 })
                 if (authRes.ok) {
-                  const data = await authRes.json() as { token: string; expiresAt: string; orgId: string }
+                  const data = await authRes.json() as { token: string; expiresAt: string; tenantId: string }
                   const expiresAt = Math.floor(new Date(data.expiresAt).getTime() / 1000)
-                  authState.value = { token: data.token, orgId: data.orgId, expiresAt }
+                  authState.value = { token: data.token, orgId: data.tenantId, expiresAt }
                   localStorage.setItem('logi_auth', JSON.stringify(authState.value))
                   const _pd = (() => { const p = window.location.hostname.split('.'); return p.length > 2 ? '.' + p.slice(-2).join('.') : window.location.hostname })()
                   document.cookie = `logi_auth_token=${data.token}; Domain=${_pd}; path=/; max-age=86400; secure; samesite=lax`

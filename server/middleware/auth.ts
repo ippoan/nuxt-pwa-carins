@@ -33,6 +33,9 @@ export default defineEventHandler((event) => {
   // OAuth コールバック戻り — クライアント JS に #fragment 処理を任せる
   if (url.searchParams.has('lw_callback')) return
 
+  // ログアウト直後 — リダイレクトせずページ表示（クライアントが処理）
+  if (url.searchParams.has('logout')) return
+
   // ?woff → WOFF SDK 認証をクライアントに委任（OAuth リダイレクト不要）
   if (url.searchParams.has('woff')) {
     const lwDomain = url.searchParams.get('lw')
@@ -62,22 +65,22 @@ export default defineEventHandler((event) => {
       sameSite: 'lax',
     })
     const params = new URLSearchParams({
-      address: lwDomain,
+      domain: lwDomain,
       redirect_uri: redirectUri,
     })
-    return sendRedirect(event, `${authWorkerUrl}/oauth/lineworks/redirect?${params.toString()}`)
+    return sendRedirect(event, `${authWorkerUrl}/api/auth/lineworks/redirect?${params.toString()}`)
   }
 
   // lw_domain cookie — 過去に LINE WORKS ログインした場合の自動ログイン
   const storedLwDomain = getCookie(event, 'lw_domain')
   if (storedLwDomain) {
     const params = new URLSearchParams({
-      address: storedLwDomain,
+      domain: storedLwDomain,
       redirect_uri: redirectUri,
     })
-    return sendRedirect(event, `${authWorkerUrl}/oauth/lineworks/redirect?${params.toString()}`)
+    return sendRedirect(event, `${authWorkerUrl}/api/auth/lineworks/redirect?${params.toString()}`)
   }
 
-  // デフォルト: 汎用ログイン画面
-  return sendRedirect(event, `${authWorkerUrl}/login?redirect_uri=${encodeURIComponent(redirectUri)}`)
+  // デフォルト: auth-worker ログインページ
+  return sendRedirect(event, `https://auth.mtamaramu.com/login?redirect_uri=${encodeURIComponent(redirectUri)}`)
 })

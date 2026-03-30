@@ -2080,10 +2080,10 @@
   dependencies:
     vue "^3.5.13"
 
-"@yhonda-ohishi-pub-dev/auth-client@^0.1.10":
-  version "0.1.15"
-  resolved "https://npm.pkg.github.com/download/@yhonda-ohishi-pub-dev/auth-client/0.1.15/1c2b73683adb945e9d9966d0a63b14f2009862f0"
-  integrity sha512-XUPTJtCYiW7AFkd1y/SiGEi2LeQQeAVXcltN3eNpWZ64nZltwl3946RzaAkfhR9M49qj3MU4XXVHtU7FbL7Mjg==
+"@yhonda-ohishi-pub-dev/auth-client@^0.1.30":
+  version "0.1.30"
+  resolved "https://npm.pkg.github.com/download/@yhonda-ohishi-pub-dev/auth-client/0.1.30/2430ed63844755f78ff3ae56eb360a32e7b0ab88"
+  integrity sha512-P0oZ2m+8we6roiPLRsrrTEXeDx9XIV1nVuIM8NJ2hZ/+WJN+bcHHK0oMx9arq7HFBNrvIMuExQhgCz2UXsxpuA==
   dependencies:
     uqr "^0.1.2"
 

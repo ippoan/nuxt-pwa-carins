@@ -7,14 +7,21 @@
       <UButton v-if="$pwa?.needRefresh" @click="$pwa?.updateServiceWorker" size="md">再インストール</UButton>
       <UButton to="/nfc" size="md" color="sky">NFC</UButton>
       <!-- PC: inline -->
-      <AuthToolbar class="ml-auto hidden md:flex" />
+      <div v-if="showQr" class="hidden md:flex relative ml-auto">
+        <UButton size="md" color="gray" @click="qrOpen = !qrOpen">Android</UButton>
+        <div v-if="qrOpen" class="absolute right-0 top-full mt-1 bg-white dark:bg-gray-800 border dark:border-gray-700 rounded shadow-lg z-50 p-4 text-center w-48">
+          <img src="/android-install-qr.png" alt="Android Install QR" class="w-full aspect-square" />
+          <p class="text-xs mt-1">Android アプリ</p>
+        </div>
+      </div>
+      <AuthToolbar class="hidden md:flex" :class="{ 'ml-auto': !showQr }" show-org-slug />
       <!-- Mobile: hamburger -->
       <div class="ml-auto relative md:hidden">
         <UButton size="md" color="gray" @click="menuOpen = !menuOpen">☰</UButton>
         <div v-if="menuOpen" class="absolute right-0 top-full mt-1 bg-white dark:bg-gray-800 border dark:border-gray-700 rounded shadow-lg z-50 min-w-[200px] py-1">
           <a href="https://www.e-shaken.mlit.go.jp/etsuran01" target="_blank"
             class="block w-full px-3 py-1.5 text-sm text-left hover:bg-gray-100 dark:hover:bg-gray-700">車検証アプリを開く</a>
-          <AuthToolbar class="flex flex-col items-stretch [&>*]:w-full [&>*]:justify-start [&>*]:px-3 [&>*]:py-1.5 [&>*]:text-sm [&>*]:rounded-none [&>button]:hover:bg-gray-100 [&>button]:dark:hover:bg-gray-700" />
+          <AuthToolbar class="flex flex-col items-stretch [&>*]:w-full [&>*]:justify-start [&>*]:px-3 [&>*]:py-1.5 [&>*]:text-sm [&>*]:rounded-none [&>button]:hover:bg-gray-100 [&>button]:dark:hover:bg-gray-700" show-org-slug />
         </div>
       </div>
     </div>
@@ -44,6 +51,8 @@ interface FileSystemHandle {
 }
 const show = ref(false);
 const menuOpen = ref(false);
+const showQr = ref(false);
+const qrOpen = ref(false);
 
 const fileRef = ref();
 
@@ -111,6 +120,8 @@ onMounted(() => {
     }
   }
   show.value = true;
+  // PC からアクセス時のみ Android インストール QR を表示
+  showQr.value = !/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
 });
 function closeMenu(e: MouseEvent) {
   const target = e.target as HTMLElement

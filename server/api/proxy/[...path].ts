@@ -14,17 +14,16 @@ export default defineEventHandler(async (event) => {
   const contentType = getHeader(event, 'content-type')
   if (contentType) headers['Content-Type'] = contentType
 
-  // auth-worker JWT から org (tenant_id) を抽出して X-Tenant-ID ヘッダーに設定
-  // rust-alc-api は JWT_SECRET が異なるため Authorization ヘッダーでは認証できない
-  // X-Tenant-ID ヘッダーでフォールバック（require_tenant ミドルウェア）
+  // JWT を Authorization ヘッダーで転送（JWT_SECRET 統一済み）
   const authHeader = getHeader(event, 'authorization')
   if (authHeader) {
+    headers['Authorization'] = authHeader
+    // tenant_id をフォールバック用に X-Tenant-ID にも設定
     const token = authHeader.replace('Bearer ', '')
     try {
       const payload = JSON.parse(atob(token.split('.')[1]))
-      if (payload.org) {
-        headers['X-Tenant-ID'] = payload.org
-      }
+      const tenantId = payload.tenant_id || payload.org
+      if (tenantId) headers['X-Tenant-ID'] = tenantId
     } catch {
       // JWT parse failure — skip
     }
