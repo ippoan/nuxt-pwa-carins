@@ -25,7 +25,14 @@
 
             <div v-if="data !== null" class="grid-row-3 mx-auto">
 
-                <UInput placeholder="Search..." v-model="q"></UInput>
+                <UInput placeholder="Search..." v-model="q" />
+                <div class="flex flex-wrap gap-x-3 gap-y-1 my-1">
+                    <label v-for="col in AllColumns.filter(c => c.key !== 'actions')" :key="col.key"
+                        class="flex items-center gap-1 text-xs cursor-pointer select-none">
+                        <input type="checkbox" :checked="!hiddenKeys.has(col.key)" @change="toggleColumn(col.key)" />
+                        {{ col.label || col.key }}
+                    </label>
+                </div>
 
                 <!-- <UTable :rows="filteredRows" :sort="{column:'EntryNoCarNo',direction:'asc'}" :columns="Columns" @select="select" :ui="{ -->
                 <UTable :rows="filteredRows" :sort="sort" :columns="Columns" @select="select" :key="status"
@@ -211,21 +218,17 @@ const sort = ref({
     direction: 'asc' as const
 
 })
-const Columns = [
-    // { label: "車検証番号", key: "ElectCertMgNo" },
-    // { label: "車両ID", key: "CarId" },
-    // { label: "発行日", key: "Publishdate" },
-    // { label: "支局", key: "TranspotationBureauchiefName" },
-    // { label: "車両番号", key: "TwodimensionCodeInfoEntryNoCarNo", sortable: true },
-    // { label: "車両番号", key: "TwodimensionCodeInfoCarNo", sortable: true },
-    // { label: "車両番号", key: "TwodimensionCodeInfoModelSpecifyNoClassifyAroundNo", sortable: true },
-    // { label: "車両番号", key: "TwodimensionCodeInfoCarNoStampPlace", sortable: true },
+const STORAGE_KEY = 'carins-hidden-columns'
+
+const AllColumns = [
     { label: "", key: "actions" },
     { label: "車番", key: "EntryNoCarNo", sortable: true },
     { label: "有効期限", key: "TwodimensionCodeInfoValidPeriodExpirdate", sortable: true },
     { label: "所有者", key: "OwnernameLowLevelChar" },
     { label: "使用者", key: "UsernameLowLevelChar" },
     { label: "最大積載量", key: "Maxloadage" },
+    { label: "車両重量", key: "CarWgt" },
+    { label: "車両総重量", key: "CarTotalWgt" },
     { label: "長さ", key: "Length" },
     { label: "幅", key: "Width" },
     { label: "高さ", key: "Height" },
@@ -238,6 +241,32 @@ const Columns = [
     { label: "pdf", key: "pdfUuid" },
     { label: "json", key: "jsonUuid" },
 ]
+
+const hiddenKeys = ref(new Set<string>())
+onMounted(() => {
+    const saved = localStorage.getItem(STORAGE_KEY)
+    if (saved) {
+        try {
+            const arr = JSON.parse(saved) as string[]
+            hiddenKeys.value = new Set(arr)
+        } catch {}
+    }
+})
+
+function toggleColumn(key: string) {
+    const next = new Set(hiddenKeys.value)
+    if (next.has(key)) {
+        next.delete(key)
+    } else {
+        next.add(key)
+    }
+    hiddenKeys.value = next
+    localStorage.setItem(STORAGE_KEY, JSON.stringify([...next]))
+}
+
+const Columns = computed(() =>
+    AllColumns.filter(c => !hiddenKeys.value.has(c.key))
+)
 
 
 // バックエンド切り替え対応のComposablesを使用
