@@ -4,7 +4,7 @@
  */
 export default defineEventHandler(async (event) => {
   const path = getRouterParam(event, 'path') || ''
-  const config = useRuntimeConfig()
+  const config = useRuntimeConfig(event)
   const backendUrl = config.alcApiUrl || 'https://rust-alc-api-747065218280.asia-northeast1.run.app'
 
   const targetUrl = `${backendUrl}/api/${path}`

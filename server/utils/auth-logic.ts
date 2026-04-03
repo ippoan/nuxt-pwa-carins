@@ -76,6 +76,6 @@ export function resolveAuthAction(config: AuthConfig, req: AuthRequest): AuthAct
   // デフォルト
   return {
     type: 'redirect',
-    redirectUrl: `https://auth.mtamaramu.com/login?redirect_uri=${encodeURIComponent(redirectUri)}`,
+    redirectUrl: `${config.authWorkerUrl}/login?redirect_uri=${encodeURIComponent(redirectUri)}`,
   }
 }

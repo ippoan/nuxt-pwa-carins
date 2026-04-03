@@ -1,6 +1,6 @@
 /**
  * ファイル受信API（PWA share_target / ドロップゾーン用）
- * Cloudflare (hono-logi) と rust-logi (cf-grpc-proxy経由) に対応
+ * rust-alc-api REST 経由でファイルアップロード
  */
 
 export default defineEventHandler(async (event) => {
@@ -15,84 +15,54 @@ export default defineEventHandler(async (event) => {
     console.log("multi:", multi.filename)
 
     const config = useRuntimeConfig(event)
-    const backend = config.public.apiBackend
+    const backendUrl = config.alcApiUrl || 'https://rust-alc-api-747065218280.asia-northeast1.run.app'
 
-    if (backend === 'rust-logi') {
-        // rust-logi: Service Binding経由でcf-grpc-proxyにアップロード
+    const content = Buffer.from(multi.data).toString("base64")
+
+    // X-Tenant-ID を Cookie の JWT から取得（share_target はカスタムヘッダーなし）
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+    const cookieHeader = getHeader(event, 'cookie') || ''
+    const tokenMatch = cookieHeader.match(/logi_auth_token=([^;]+)/)
+    if (tokenMatch) {
+        headers['Authorization'] = `Bearer ${tokenMatch[1]}`
         try {
-            const { cloudflare } = event.context
-            if (!cloudflare?.env?.GRPC_PROXY_SERVICE) {
-                throw new Error('GRPC_PROXY_SERVICE binding not available')
-            }
+            const payload = JSON.parse(atob(tokenMatch[1].split('.')[1]))
+            const tenantId = payload.tenant_id || payload.org
+            if (tenantId) headers['X-Tenant-ID'] = tenantId
+        } catch { /* ignore */ }
+    }
+    // 明示的な Authorization / X-Tenant-ID ヘッダーがあればそちらを優先
+    const authHeader = getHeader(event, 'authorization')
+    if (authHeader) {
+        headers['Authorization'] = authHeader
+    }
+    const tenantHeader = getHeader(event, 'x-tenant-id')
+    if (tenantHeader) {
+        headers['X-Tenant-ID'] = tenantHeader
+    }
 
-            const blobBase64 = Buffer.from(multi.data).toString('base64')
-            const targetUrl = 'https://cf-grpc-proxy.workers.dev/logi.files.FilesService/CreateFile'
+    try {
+        const res: any = await $fetch(`${backendUrl}/api/files`, {
+            method: "post",
+            body: JSON.stringify({
+                filename: multi.filename || "unnamed",
+                type: multi.type || "application/octet-stream",
+                content,
+            }),
+            headers,
+        })
+        console.log("file uploaded:", res?.uuid)
 
-            // Cookie から JWT を取得（share_target フォーム POST にはカスタムヘッダーが付かないため）
-            const cookieHeader = getHeader(event, 'cookie') || ''
-            const tokenMatch = cookieHeader.match(/logi_auth_token=([^;]+)/)
-            const authToken = tokenMatch ? tokenMatch[1] : null
-
-            const response = await cloudflare.env.GRPC_PROXY_SERVICE.fetch(targetUrl, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Connect-Protocol-Version': '1',
-                    ...(authToken ? { 'x-auth-token': authToken } : {}),
-                },
-                body: JSON.stringify({
-                    filename: multi.filename || 'unnamed',
-                    type: multi.type || 'application/octet-stream',
-                    blobBase64: blobBase64,
-                }),
-            })
-
-            if (!response.ok) {
-                const errorText = await response.text()
-                throw new Error(`Upload failed: ${response.status} ${errorText}`)
-            }
-
-            const result = await response.json() as { file?: { uuid?: string } }
-            const uuid = result?.file?.uuid || ''
-            return { uuid, message: '送信完了しました' }
-        } catch (e) {
-            console.error("rust-logi upload failed:", e)
-            if (1 in ap && ap[1].name == "from" && ap[1].data.toString() == "front") {
-                return { uuid: "", message: "失敗しました" }
-            }
-            await sendRedirect(event, "/?message=" + encodeURIComponent("失敗しました"), 302)
+        if (1 in ap && ap[1].name == "from" && ap[1].data.toString() == "front") {
+            return { uuid: res?.uuid || "", message: "送信完了しました" }
+        } else {
+            return { uuid: res?.uuid || "", message: "送信完了しました" }
         }
-    } else {
-        // cloudflare / cloudrun: 既存のhono-logiへのアップロード
-        const blob = Buffer.from(multi.data).toString("base64")
-        const sendData = {
-            blob: blob,
-            filename: multi.filename,
-            type: multi.type,
+    } catch (e) {
+        console.error("file upload failed:", e)
+        if (1 in ap && ap[1].name == "from" && ap[1].data.toString() == "front") {
+            return { uuid: "", message: "失敗しました" }
         }
-        const { cfId, cfSecret, cfServer } = useRuntimeConfig(event)
-        try {
-            const res: any = await $fetch(cfServer, {
-                method: "post",
-                body: JSON.stringify(sendData),
-                headers: {
-                    "CF-Access-Client-Id": cfId,
-                    "CF-Access-Client-Secret": cfSecret,
-                    "Content-Type": "application/json"
-                },
-            })
-            console.log("atf post")
-            if (1 in ap && ap[1].name == "from" && ap[1].data.toString() == "front") {
-                console.log("送信完了しました")
-                return { uuid: "", message: "送信完了しました" }
-            } else {
-                console.log("送信完了しました2")
-                return { uuid: "", message: "送信完了しました" }
-            }
-        } catch (e) {
-            console.log("失敗しました 302")
-            console.log(JSON.stringify(e))
-            await sendRedirect(event, "/?message=" + encodeURIComponent("失敗しました"), 302)
-        }
+        await sendRedirect(event, "/?message=" + encodeURIComponent("失敗しました"), 302)
     }
 })

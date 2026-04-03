@@ -3,6 +3,7 @@ name: Test
 on:
   push:
     branches: [main]
+    tags: ['v*']
   pull_request:
     branches: [main]
 
@@ -137,8 +138,16 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - uses: ippoan/auth-worker/.github/actions/use-auth-client-dev@main
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Build
         run: NITRO_PRESET=cloudflare_module npm run build
+        env:
+          NUXT_PUBLIC_AUTH_WORKER_URL: ${{ vars.STAGING_AUTH_WORKER_URL }}
+          NUXT_PUBLIC_API_BACKEND: ${{ vars.STAGING_API_BACKEND }}
+          NUXT_ALC_API_URL: ${{ vars.STAGING_ALC_API_URL }}
 
       - name: Deploy to Cloudflare Workers (staging)
         env:
@@ -147,7 +156,7 @@ jobs:
 
   deploy-release:
     name: Deploy Release
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    if: startsWith(github.ref, 'refs/tags/v') && github.event_name == 'push'
     needs: [test, typecheck]
     runs-on: ubuntu-latest
     steps:
@@ -164,6 +173,10 @@ jobs:
 
       - name: Build
         run: NITRO_PRESET=cloudflare_module npm run build
+        env:
+          NUXT_PUBLIC_AUTH_WORKER_URL: ${{ vars.RELEASE_AUTH_WORKER_URL }}
+          NUXT_PUBLIC_API_BACKEND: ${{ vars.RELEASE_API_BACKEND }}
+          NUXT_ALC_API_URL: ${{ vars.RELEASE_ALC_API_URL }}
 
       - name: Deploy to Cloudflare Workers (release)
         env:
