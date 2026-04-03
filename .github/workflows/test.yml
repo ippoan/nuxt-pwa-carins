@@ -139,6 +139,10 @@ jobs:
 
       - name: Build
         run: NITRO_PRESET=cloudflare_module npm run build
+        env:
+          NUXT_PUBLIC_AUTH_WORKER_URL: ${{ vars.STAGING_AUTH_WORKER_URL }}
+          NUXT_PUBLIC_API_BACKEND: ${{ vars.STAGING_API_BACKEND }}
+          NUXT_ALC_API_URL: ${{ vars.STAGING_ALC_API_URL }}
 
       - name: Deploy to Cloudflare Workers (staging)
         env:
