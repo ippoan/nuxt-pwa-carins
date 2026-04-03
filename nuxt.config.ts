@@ -37,6 +37,7 @@ export default defineNuxtConfig({
     public: {
       apiBackend: 'rust-alc-api',
       authWorkerUrl: process.env.NUXT_PUBLIC_AUTH_WORKER_URL || '',
+      appVersion: process.env.NUXT_PUBLIC_APP_VERSION || 'dev',
     },
   },
 
