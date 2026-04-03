@@ -8,6 +8,7 @@ on:
 
 permissions:
   contents: read
+  packages: read
 
 jobs:
   test:
@@ -21,7 +22,10 @@ jobs:
           node-version: '24'
           cache: 'npm'
 
-      - run: npm ci
+      - run: npm install
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - run: npx nuxt prepare
 
       - name: Run tests with coverage
@@ -38,7 +42,10 @@ jobs:
           node-version: '24'
           cache: 'npm'
 
-      - run: npm ci
+      - run: npm install
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - run: npx nuxi typecheck
 
   deploy-staging:
@@ -54,10 +61,12 @@ jobs:
           node-version: '24'
           cache: 'npm'
 
-      - run: npm ci
+      - run: npm install
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build
-        run: npm run build
+        run: NITRO_PRESET=cloudflare_module npm run build
 
       - name: Deploy to Cloudflare Workers (staging)
         env:
@@ -77,10 +86,12 @@ jobs:
           node-version: '24'
           cache: 'npm'
 
-      - run: npm ci
+      - run: npm install
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build
-        run: npm run build
+        run: NITRO_PRESET=cloudflare_module npm run build
 
       - name: Deploy to Cloudflare Workers (release)
         env:
