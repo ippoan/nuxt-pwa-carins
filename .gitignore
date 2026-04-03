@@ -31,3 +31,6 @@ nuxt_dtako_logs_ref
 plan/
 target/
 test-preview.mjs
+
+coverage/
+public/app-release.apk

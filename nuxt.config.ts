@@ -18,7 +18,7 @@ export default defineNuxtConfig({
     }
   },
   build: {
-    transpile: ['@yhonda-ohishi-pub-dev/auth-client'],
+    transpile: ['@ippoan/auth-client'],
   },
   devServer: {
     host: '0.0.0.0',
