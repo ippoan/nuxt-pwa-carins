@@ -14,34 +14,55 @@ export default defineEventHandler(async (event) => {
     const multi = ap[0]
     console.log("multi:", multi.filename)
 
-    const blob = Buffer.from(multi.data).toString("base64")
-    const sendData = {
-        blob: blob,
-        filename: multi.filename,
-        type: multi.type,
+    const config = useRuntimeConfig(event)
+    const backendUrl = config.alcApiUrl || 'https://rust-alc-api-747065218280.asia-northeast1.run.app'
+
+    const content = Buffer.from(multi.data).toString("base64")
+
+    // X-Tenant-ID を Cookie の JWT から取得（share_target はカスタムヘッダーなし）
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+    const cookieHeader = getHeader(event, 'cookie') || ''
+    const tokenMatch = cookieHeader.match(/logi_auth_token=([^;]+)/)
+    if (tokenMatch) {
+        headers['Authorization'] = `Bearer ${tokenMatch[1]}`
+        try {
+            const payload = JSON.parse(atob(tokenMatch[1].split('.')[1]))
+            const tenantId = payload.tenant_id || payload.org
+            if (tenantId) headers['X-Tenant-ID'] = tenantId
+        } catch { /* ignore */ }
     }
-    const { cfId, cfSecret, cfServer } = useRuntimeConfig(event)
+    // 明示的な Authorization / X-Tenant-ID ヘッダーがあればそちらを優先
+    const authHeader = getHeader(event, 'authorization')
+    if (authHeader) {
+        headers['Authorization'] = authHeader
+    }
+    const tenantHeader = getHeader(event, 'x-tenant-id')
+    if (tenantHeader) {
+        headers['X-Tenant-ID'] = tenantHeader
+    }
+
     try {
-        const res: any = await $fetch(cfServer, {
+        const res: any = await $fetch(`${backendUrl}/api/files`, {
             method: "post",
-            body: JSON.stringify(sendData),
-            headers: {
-                "CF-Access-Client-Id": cfId,
-                "CF-Access-Client-Secret": cfSecret,
-                "Content-Type": "application/json"
-            },
+            body: JSON.stringify({
+                filename: multi.filename || "unnamed",
+                type: multi.type || "application/octet-stream",
+                content,
+            }),
+            headers,
         })
-        console.log("atf post")
+        console.log("file uploaded:", res?.uuid)
+
         if (1 in ap && ap[1].name == "from" && ap[1].data.toString() == "front") {
-            console.log("送信完了しました")
-            return { uuid: "", message: "送信完了しました" }
+            return { uuid: res?.uuid || "", message: "送信完了しました" }
         } else {
-            console.log("送信完了しました2")
-            return { uuid: "", message: "送信完了しました" }
+            return { uuid: res?.uuid || "", message: "送信完了しました" }
         }
     } catch (e) {
-        console.log("失敗しました 302")
-        console.log(JSON.stringify(e))
+        console.error("file upload failed:", e)
+        if (1 in ap && ap[1].name == "from" && ap[1].data.toString() == "front") {
+            return { uuid: "", message: "失敗しました" }
+        }
         await sendRedirect(event, "/?message=" + encodeURIComponent("失敗しました"), 302)
     }
 })

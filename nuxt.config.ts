@@ -33,10 +33,6 @@ export default defineNuxtConfig({
   runtimeConfig: {
     // rust-alc-api バックエンド URL
     alcApiUrl: process.env.NUXT_ALC_API_URL || 'https://rust-alc-api-747065218280.asia-northeast1.run.app',
-    // Cloudflare設定（レガシー）
-    cfId: process.env.NUXT_CF_ID,
-    cfSecret: process.env.NUXT_CF_SECRET,
-    cfServer: process.env.NUXT_CF_SERVER,
     // パブリック設定
     public: {
       apiBackend: 'rust-alc-api',
