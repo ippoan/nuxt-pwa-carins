@@ -19,9 +19,8 @@ NUXT_PUBLIC_API_BACKEND = "rust-alc-api"
 NUXT_PUBLIC_AUTH_WORKER_URL = "https://alc-api.ippoan.org"
 NUXT_ALC_API_URL = "https://rust-alc-api-747065218280.asia-northeast1.run.app"
 
-[[routes]]
-pattern = "nuxt-pwa-carins.mtamaramu.com"
-custom_domain = true
+# custom_domain は Cloudflare 側で設定済み (nuxt-pwa-carins.mtamaramu.com)
+# wrangler.toml から [[routes]] を削除しても維持される
 
 [env.preview]
 [env.preview.vars]
