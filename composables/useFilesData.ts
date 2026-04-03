@@ -2,17 +2,7 @@
  * ファイルデータ取得 Composable
  * rust-alc-api REST API 経由
  */
-
-interface FileData {
-  uuid: string
-  filename: string
-  file_type: string
-  created: string
-  deleted?: string
-  s3_key?: string
-  storage_class?: string
-  last_accessed_at?: string
-}
+import type { FileRow, FileListResponse } from '~/types/alc-api'
 
 interface UseFilesDataOptions {
   lazy?: boolean
@@ -25,7 +15,7 @@ export const useRecentFilesData = (options?: UseFilesDataOptions) => {
   const { token } = useAuth()
 
   return useAsyncData('recentFiles', async () => {
-    const res = await $fetch<{ files: FileData[] }>('/api/proxy/files/recent', {
+    const res = await $fetch<FileListResponse>('/api/proxy/files/recent', {
       headers: token.value ? { Authorization: `Bearer ${token.value}` } : {},
     })
     return res?.files
@@ -42,7 +32,7 @@ export const useFilesData = (options?: UseFilesDataOptions) => {
   const { token } = useAuth()
 
   return useAsyncData('filesList', async () => {
-    const res = await $fetch<{ files: FileData[] }>('/api/proxy/files', {
+    const res = await $fetch<FileListResponse>('/api/proxy/files', {
       headers: token.value ? { Authorization: `Bearer ${token.value}` } : {},
     })
     return res?.files
@@ -51,3 +41,5 @@ export const useFilesData = (options?: UseFilesDataOptions) => {
     server: false,
   })
 }
+
+export type { FileRow }
