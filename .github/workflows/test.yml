@@ -137,6 +137,10 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - uses: ippoan/auth-worker/.github/actions/use-auth-client-dev@main
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Build
         run: NITRO_PRESET=cloudflare_module npm run build
         env:
