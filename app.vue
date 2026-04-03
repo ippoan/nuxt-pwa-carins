@@ -1,5 +1,5 @@
 <script setup lang="ts">
-
+const { appVersion } = useRuntimeConfig().public
 </script>
 
 <template>
@@ -11,5 +11,6 @@
     <NuxtPage />
     <!-- <NuxtRouteAnnouncer />
     <NuxtWelcome /> -->
+    <div class="version-badge">{{ appVersion }}</div>
   </div>
 </template>

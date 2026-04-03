@@ -149,6 +149,7 @@ jobs:
           NUXT_PUBLIC_AUTH_WORKER_URL: ${{ vars.STAGING_AUTH_WORKER_URL }}
           NUXT_PUBLIC_API_BACKEND: ${{ vars.STAGING_API_BACKEND }}
           NUXT_ALC_API_URL: ${{ vars.STAGING_ALC_API_URL }}
+          NUXT_PUBLIC_APP_VERSION: ${{ github.sha }}
 
       - name: Deploy to Cloudflare Workers (staging)
         env:
@@ -178,6 +179,7 @@ jobs:
           NUXT_PUBLIC_AUTH_WORKER_URL: ${{ vars.RELEASE_AUTH_WORKER_URL }}
           NUXT_PUBLIC_API_BACKEND: ${{ vars.RELEASE_API_BACKEND }}
           NUXT_ALC_API_URL: ${{ vars.RELEASE_ALC_API_URL }}
+          NUXT_PUBLIC_APP_VERSION: ${{ github.ref_name }}
 
       - name: Deploy to Cloudflare Workers (release)
         env:
