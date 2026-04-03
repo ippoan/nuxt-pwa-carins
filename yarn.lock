@@ -1035,10 +1035,10 @@
   resolved "https://registry.npmjs.org/@ioredis/commands/-/commands-1.2.0.tgz"
   integrity sha512-Sx1pU8EM64o2BrqNpEO1CNLtKQwyhuXuqyfH7oGKCk+1a33d2r5saW8zNwm3j6BTExtjrv2BxTgzzkMwts6vGg==
 
-"@ippoan/auth-client@^0.1.6":
-  version "0.1.6"
-  resolved "https://npm.pkg.github.com/download/@ippoan/auth-client/0.1.6/9deedfb9d05ced4ef660c20d69383afa4bdf3a6a"
-  integrity sha512-Ae4lPqZtkgZLUXt8PKZt3qoH+NMzjol5z+jWRyyzPLkp3q6E819G6656f1BKVwIpyxsr5UA4Eo7nx6vFU5p+LQ==
+"@ippoan/auth-client@^0.1.12":
+  version "0.1.12"
+  resolved "https://npm.pkg.github.com/download/@ippoan/auth-client/0.1.12/60e0ed276c091c5ffbe4fcb0f274540462d27adf"
+  integrity sha512-0DwI1xkoljtnwGjrudWmiRFbJ+nxdkXltwYo7g7CUGpwaNXYNgJ2OvlczrXR3Mn5G1qW2ipipTnj6WW/J2crFw==
   dependencies:
     uqr "^0.1.2"
 

@@ -1,9 +1,8 @@
 <script setup lang="ts">
-import { VersionBadge, StagingFooter } from '@ippoan/auth-client'
+import { VersionBadge } from '@ippoan/auth-client'
 
-const config = useRuntimeConfig()
-const apiBase = config.alcApiUrl || config.public.alcApiUrl || ''
-const { appVersion } = config.public
+const { appVersion, authWorkerUrl } = useRuntimeConfig().public
+const healthUrl = typeof authWorkerUrl === 'string' && authWorkerUrl ? `${authWorkerUrl}/api/health` : ''
 </script>
 
 <template>
@@ -15,6 +14,6 @@ const { appVersion } = config.public
     <NuxtPage />
     <!-- <NuxtRouteAnnouncer />
     <NuxtWelcome /> -->
-    <VersionBadge :api-base="apiBase" :frontend-version="appVersion" />
+    <VersionBadge :health-url="healthUrl" :frontend-version="appVersion" />
   </div>
 </template>
