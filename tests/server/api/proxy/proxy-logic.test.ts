@@ -4,7 +4,7 @@ import {
   buildProxyHeaders,
   isDownloadPath,
   isBinaryResponse,
-} from '../../../../server/api/proxy/proxy-logic'
+} from '../../../../server/utils/proxy-logic'
 
 function fakeJwt(payload: Record<string, unknown>): string {
   return `header.${btoa(JSON.stringify(payload))}.sig`

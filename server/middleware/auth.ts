@@ -10,7 +10,7 @@
  * - ?lw_callback → OAuth コールバック戻り（リダイレクトスキップ）
  */
 
-import { resolveAuthAction } from './auth-logic'
+import { resolveAuthAction } from '../utils/auth-logic'
 
 export default defineEventHandler((event) => {
   const config = useRuntimeConfig()

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { resolveAuthAction, getParentDomainFromHost, type AuthConfig, type AuthRequest } from '../../../server/middleware/auth-logic'
+import { resolveAuthAction, getParentDomainFromHost, type AuthConfig, type AuthRequest } from '../../../server/utils/auth-logic'
 
 const defaultConfig: AuthConfig = {
   apiBackend: 'rust-alc-api',
