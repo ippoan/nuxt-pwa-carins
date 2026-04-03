@@ -10,17 +10,20 @@
     "publish": "nuxt build && wrangler pages deploy dist/ --branch production",
     "deploy": "NITRO_PRESET=cloudflare_module nuxt build && wrangler deploy",
     "deployWatch": "NITRO_PRESET=cloudflare_module nuxt build && wrangler deploy && wrangler tail nuxt-pwa-carins",
-    "postinstall": "nuxt prepare"
+    "postinstall": "nuxt prepare",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "@bufbuild/protobuf": "^2.10.2",
     "@connectrpc/connect": "^2.1.1",
     "@connectrpc/connect-node": "^2.1.1",
     "@connectrpc/connect-web": "^2.1.1",
+    "@ippoan/auth-client": "^0.1.6",
     "@nuxt/ui": "2.20.0",
     "@vueuse/core": "^12.3.0",
     "@vueuse/nuxt": "^12.3.0",
-    "@yhonda-ohishi-pub-dev/auth-client": "^0.1.30",
     "@yhonda-ohishi-pub-dev/logi-proto": "^0.1.38",
     "nuxt": "^3.15.1",
     "nuxt-api-party": "2.1.2",
@@ -30,9 +33,14 @@
     "vue-router": "latest"
   },
   "devDependencies": {
+    "@nuxt/test-utils": "^4.0.0",
     "@vite-pwa/assets-generator": "^0.2.6",
     "@vite-pwa/nuxt": "^0.10.6",
+    "@vitest/coverage-v8": "^4.1.2",
+    "@vue/test-utils": "^2.4.6",
+    "happy-dom": "^20.8.9",
     "playwright": "^1.58.1",
+    "vitest": "^4.1.2",
     "wrangler": "^4.67.0"
   }
 }

@@ -28,7 +28,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import { AuthToolbar } from '@yhonda-ohishi-pub-dev/auth-client'
+import { AuthToolbar } from '@ippoan/auth-client'
 import { useFileSystemAccess } from "@vueuse/core";
 declare var window: Window;
 interface Window {
