@@ -116,7 +116,7 @@ describe('resolveAuthAction', () => {
     const action = resolveAuthAction(defaultConfig, makeReq())
     expect(action.type).toBe('redirect')
     if (action.type === 'redirect') {
-      expect(action.redirectUrl).toContain('https://auth.mtamaramu.com/login?redirect_uri=')
+      expect(action.redirectUrl).toContain('https://auth.test/login?redirect_uri=')
     }
   })
 
