@@ -31,6 +31,8 @@ NUXT_ALC_API_URL = "https://rust-alc-api-747065218280.asia-northeast1.run.app"
 
 [env.staging]
 name = "nuxt-pwa-carins-staging"
+workers_dev = true
+routes = []
 [env.staging.vars]
 NUXT_PUBLIC_API_BACKEND = "rust-alc-api"
 NUXT_PUBLIC_AUTH_WORKER_URL = "https://auth-worker-staging.m-tama-ramu.workers.dev"
