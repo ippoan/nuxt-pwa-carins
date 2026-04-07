@@ -14,17 +14,14 @@ command = "npm run build"
 enabled = true
 head_sampling_rate = 1
 
-[vars]
-
 [[routes]]
 pattern = "carins.ippoan.org"
 custom_domain = true
+
+[vars]
 NUXT_PUBLIC_API_BACKEND = "rust-alc-api"
 NUXT_PUBLIC_AUTH_WORKER_URL = "https://auth.ippoan.org"
 NUXT_ALC_API_URL = "https://rust-alc-api-747065218280.asia-northeast1.run.app"
-
-# custom_domain は Cloudflare 側で設定済み (nuxt-pwa-carins.mtamaramu.com)
-# wrangler.toml から [[routes]] を削除しても維持される
 
 [env.preview]
 [env.preview.vars]
