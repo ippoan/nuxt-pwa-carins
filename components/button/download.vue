@@ -1,10 +1,12 @@
 <template>
-    <div v-if="props.uuid && props.storageVerified !== false">
-
+    <div v-if="props.uuid && props.storageVerified === true">
         <UButton @click="download" :ui="{rounded:'rounded-none'}">↓</UButton>
     </div>
-    <div v-else-if="props.storageVerified === false">
+    <div v-else-if="props.uuid && props.storageVerified === false">
         <UButton color="red" :ui="{rounded:'rounded-none'}" disabled title="ストレージにファイルが見つかりません">✕</UButton>
+    </div>
+    <div v-else-if="props.uuid">
+        <UButton color="gray" :ui="{rounded:'rounded-none'}" disabled>…</UButton>
     </div>
     <div v-else>
         <UButton  color="gray" :ui="{rounded:'rounded-none'}">　</UButton>
