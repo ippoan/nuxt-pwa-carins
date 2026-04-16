@@ -18,7 +18,7 @@
                 <summary class="cursor-pointer text-sm">最近のファイル ({{ Math.min(RecentData.length, 20) }})</summary>
                 <UTable :rows="RecentData.slice(0, 20)" :key="RecentStatus" :loading="RecentStatus === 'pending'">
                     <template #uuid-data="{ row }">
-                        <ButtonDownload :uuid="row.uuid" :filename="row.filename" :storage-verified="row.storageVerified" />
+                        <ButtonDownload :uuid="row.uuid" :filename="row.filename" :storage-verified="verifiedMap[row.uuid] ?? row.storageVerified" />
                     </template>
                 </UTable>
             </details>
@@ -273,6 +273,26 @@ const Columns = computed(() =>
 const { data: RecentData, refresh: RecentRefresh, status: RecentStatus, clear: RecentClear } = useRecentFilesData({
     lazy: true,
     cache: false,
+})
+
+// storage_verified が null のファイルを verify API で確認
+const verifiedMap = ref<Record<string, boolean>>({})
+const { token } = useAuth()
+
+watch(RecentData, async (files) => {
+    if (!files) return
+    const unverified = files.filter(f => f.storageVerified == null && f.uuid).map(f => f.uuid)
+    if (unverified.length === 0) return
+    try {
+        const result = await $fetch<Record<string, boolean>>('/api/proxy/files/verify', {
+            method: 'POST',
+            headers: token.value ? { Authorization: `Bearer ${token.value}` } : {},
+            body: { uuids: unverified },
+        })
+        verifiedMap.value = { ...verifiedMap.value, ...result }
+    } catch (e) {
+        console.warn('verify failed:', e)
+    }
 })
 
 const { data, execute, refresh, status, clear } = useCarInspectionData({
