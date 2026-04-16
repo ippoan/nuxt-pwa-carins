@@ -78,7 +78,7 @@
                         </div>
                         <div v-else>
 
-                            <ButtonDownload :uuid="row.pdfUuid" :filename="makeSt(row) + '.pdf'" />
+                            <ButtonDownload :uuid="row.pdfUuid" :filename="makeSt(row) + '.pdf'" :storage-verified="verifiedMap[row.pdfUuid]" />
                             <!-- {{ row.pdfUuid }} -->
                         </div>
                     </template>
@@ -89,12 +89,13 @@
                         </div>
                         <div v-else>
 
-                            <ButtonDownload :uuid="row.jsonUuid" :filename="makeSt(row) + '.json'" />
+                            <ButtonDownload :uuid="row.jsonUuid" :filename="makeSt(row) + '.json'" :storage-verified="verifiedMap[row.jsonUuid]" />
                             <!-- {{ row.pdfUuid }} -->
                         </div>
                     </template>
                     <template #actions-data="{ row }">
                         <UButton
+                            v-if="verifiedMap[row.pdfUuid] !== false"
                             color="sky"
                             icon="i-ic:baseline-content-paste-search"
                             :ui="{ rounded: 'rounded-none' }"
@@ -279,9 +280,8 @@ const { data: RecentData, refresh: RecentRefresh, status: RecentStatus, clear: R
 const verifiedMap = ref<Record<string, boolean>>({})
 const { token } = useAuth()
 
-watch(RecentData, async (files) => {
-    if (!files) return
-    const unverified = files.filter(f => f.storageVerified == null && f.uuid).map(f => f.uuid)
+async function verifyUuids(uuids: string[]) {
+    const unverified = uuids.filter(u => u && !(u in verifiedMap.value))
     if (unverified.length === 0) return
     try {
         const result = await $fetch<Record<string, boolean>>('/api/proxy/files/verify', {
@@ -293,10 +293,21 @@ watch(RecentData, async (files) => {
     } catch (e) {
         console.warn('verify failed:', e)
     }
+}
+
+watch(RecentData, (files) => {
+    if (!files) return
+    verifyUuids(files.filter(f => f.uuid).map(f => f.uuid))
 })
 
 const { data, execute, refresh, status, clear } = useCarInspectionData({
     cache: false,
+})
+
+watch(data, (rows) => {
+    if (!rows) return
+    const uuids = rows.flatMap(r => [r.pdfUuid, r.jsonUuid].filter(Boolean) as string[])
+    verifyUuids([...new Set(uuids)])
 })
 
 async function refreshData() {
