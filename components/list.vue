@@ -18,7 +18,7 @@
                 <summary class="cursor-pointer text-sm">最近のファイル ({{ Math.min(RecentData.length, 20) }})</summary>
                 <UTable :rows="RecentData.slice(0, 20)" :key="RecentStatus" :loading="RecentStatus === 'pending'">
                     <template #uuid-data="{ row }">
-                        <ButtonDownload :uuid="row.uuid" :filename="row.filename" />
+                        <ButtonDownload :uuid="row.uuid" :filename="row.filename" :storage-verified="row.storageVerified" />
                     </template>
                 </UTable>
             </details>

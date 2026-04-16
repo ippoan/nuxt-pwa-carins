@@ -1,7 +1,10 @@
 <template>
-    <div v-if="props.uuid">
+    <div v-if="props.uuid && props.storageVerified !== false">
 
         <UButton @click="download" :ui="{rounded:'rounded-none'}">↓</UButton>
+    </div>
+    <div v-else-if="props.storageVerified === false">
+        <UButton color="red" :ui="{rounded:'rounded-none'}" disabled title="ストレージにファイルが見つかりません">✕</UButton>
     </div>
     <div v-else>
         <UButton  color="gray" :ui="{rounded:'rounded-none'}">　</UButton>
@@ -13,7 +16,8 @@ const { download: downloadFile } = useFileDownload();
 
 const props = defineProps<{
     uuid?: string,
-    filename?: string | null
+    filename?: string | null,
+    storageVerified?: boolean | null
 }>();
 
 async function download() {
