@@ -41,3 +41,28 @@ export const useExpiredCarInspectionData = (options?: UseCarInspectionDataOption
     server: false,
   })
 }
+
+/**
+ * 同一車両 (CarId) の車検証履歴を取得 (新→旧)
+ */
+export const useCarInspectionHistory = (carId: Ref<string | null>) => {
+  const { token } = useAuth()
+
+  return useAsyncData(
+    () => `carInspectionHistory-${carId.value ?? 'none'}`,
+    async () => {
+      if (!carId.value) return []
+      const res = await $fetch<CarInspectionListResponse>(
+        `/api/proxy/car-inspections/by-car/${encodeURIComponent(carId.value)}/history`,
+        { headers: token.value ? { Authorization: `Bearer ${token.value}` } : {} },
+      )
+      return res?.carInspections ?? []
+    },
+    {
+      lazy: true,
+      server: false,
+      immediate: false,
+      watch: [carId],
+    },
+  )
+}
