@@ -49,7 +49,7 @@ export const useCarInspectionHistory = (carId: Ref<string | null>) => {
   const { token } = useAuth()
 
   return useAsyncData(
-    () => `carInspectionHistory-${carId.value ?? 'none'}`,
+    `carInspectionHistory-${carId.value ?? 'none'}`,
     async () => {
       if (!carId.value) return []
       const res = await $fetch<CarInspectionListResponse>(
