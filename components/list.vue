@@ -102,8 +102,22 @@
                             @click.stop="previewPdf(row)"
                         />
                     </template>
+                    <template #history-data="{ row }">
+                        <UButton
+                            v-if="row.CarId"
+                            color="gray"
+                            icon="i-ic:baseline-history"
+                            :ui="{ rounded: 'rounded-none' }"
+                            @click.stop="openHistory(row.CarId)"
+                            title="過去の車検証履歴を表示"
+                        />
+                    </template>
                 </UTable>
             </div>
+
+            <UModal v-model="isHistoryOpen" :ui="{ width: 'sm:max-w-4xl' }">
+                <CarInspectionHistory v-if="historyCarId" :car-id="historyCarId" />
+            </UModal>
             <!-- <div>
 
             <UTable :rows="data" :ui="{
@@ -221,8 +235,18 @@ const sort = ref({
 })
 const STORAGE_KEY = 'carins-hidden-columns'
 
+const historyCarId = ref<string | null>(null)
+const isHistoryOpen = computed({
+    get: () => historyCarId.value !== null,
+    set: (v: boolean) => { if (!v) historyCarId.value = null },
+})
+function openHistory(carId: string) {
+    historyCarId.value = carId
+}
+
 const AllColumns = [
     { label: "", key: "actions" },
+    { label: "履歴", key: "history" },
     { label: "車番", key: "EntryNoCarNo", sortable: true },
     { label: "有効期限", key: "TwodimensionCodeInfoValidPeriodExpirdate", sortable: true },
     { label: "所有者", key: "OwnernameLowLevelChar" },
