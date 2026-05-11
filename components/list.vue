@@ -354,24 +354,18 @@ async function refreshData() {
 
 const filteredRows = computed(() => {
     if (!q.value) {
-        // console.log("dd");
         return data.value != null ? data.value : undefined;
     }
-    //   console.log("else");
     if (data.value) {
-
+        const st = toHalfWidth(q.value.replace(/\r?\n/g, ""));
         const filter = data.value.filter((dd) => {
             return Object.values(dd).some((value) => {
-                // console.log(value)
-                // console.log("q", q.value);
-                const st = q.value.replace("\n", "").replace("\r\n", "");
-                return String(value).includes(st);
+                return toHalfWidth(String(value ?? "")).includes(st);
             });
         });
         return filter != null ? filter : undefined
     } else {
         return undefined
-        data.value
     }
 });
 
