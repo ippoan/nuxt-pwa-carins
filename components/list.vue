@@ -64,7 +64,10 @@
                     </template>
 
                     <template #EntryNoCarNo-data="{ row }">
-                        {{ toHalfWidth(row.EntryNoCarNo) }}
+                        <template v-for="(part, i) in highlightParts(toHalfWidth(row.EntryNoCarNo), normalizedQuery)" :key="i">
+                            <mark v-if="part.match" class="bg-yellow-300 text-black">{{ part.text }}</mark>
+                            <template v-else>{{ part.text }}</template>
+                        </template>
                     </template>
                     <template #Firstregistdate-data="{ row }">
                         <CarInsFirstregistdate :row="row" />
@@ -352,12 +355,31 @@ async function refreshData() {
 }
 
 
+const normalizedQuery = computed(() => toHalfWidth(q.value.replace(/\r?\n/g, "")))
+
+function highlightParts(text: string, query: string): { text: string, match: boolean }[] {
+    if (!query) return [{ text, match: false }]
+    const parts: { text: string, match: boolean }[] = []
+    let i = 0
+    while (i < text.length) {
+        const idx = text.indexOf(query, i)
+        if (idx === -1) {
+            parts.push({ text: text.slice(i), match: false })
+            break
+        }
+        if (idx > i) parts.push({ text: text.slice(i, idx), match: false })
+        parts.push({ text: text.slice(idx, idx + query.length), match: true })
+        i = idx + query.length
+    }
+    return parts
+}
+
 const filteredRows = computed(() => {
     if (!q.value) {
         return data.value != null ? data.value : undefined;
     }
     if (data.value) {
-        const st = toHalfWidth(q.value.replace(/\r?\n/g, ""));
+        const st = normalizedQuery.value;
         const filter = data.value.filter((dd) => {
             return Object.values(dd).some((value) => {
                 return toHalfWidth(String(value ?? "")).includes(st);
