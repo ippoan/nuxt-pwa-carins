@@ -7,6 +7,13 @@ compatibility_flags = ["nodejs_compat"]
 main = "./.output/server/index.mjs"
 assets = { directory = "./.output/public/", binding = "ASSETS" }
 
+# frontend-ci.yml の secret-verify job が secret backup の auditability の
+# ため明示宣言を要求する。本 worker は wrangler secret を使わない (GCP SA
+# key 等は server runtime config 経由) ため、他 CF worker repo
+# (nuxt-notify / nuxt-trouble) に揃えて空配列を宣言する。
+[secrets]
+required = []
+
 [build]
 command = "npm run build"
 
