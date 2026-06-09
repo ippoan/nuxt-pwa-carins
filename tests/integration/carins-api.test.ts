@@ -66,11 +66,11 @@ describe.skipIf(!API_BASE)('carins ↔ rust-alc-api live integration', () => {
     expect(row.ElectCertMgNo).toBe('ECMN-CARINS-001')
   })
 
-  it('GET /api/car-inspection-files/current — 車検証ファイル current (carInspections wrapper)', async () => {
+  it('GET /api/car-inspection-files/current — 車検証ファイル current (files wrapper)', async () => {
     const res = await fetch(`${API_BASE}/api/car-inspection-files/current`, { headers: tenantHeaders() })
     expect(res.status).toBe(200)
-    const body = (await res.json()) as { carInspections: unknown[] }
-    expect(Array.isArray(body.carInspections)).toBe(true)
+    const body = (await res.json()) as { files: unknown[] }
+    expect(Array.isArray(body.files)).toBe(true)
   })
 
   it('GET /api/files — ファイル一覧 (files wrapper)', async () => {
