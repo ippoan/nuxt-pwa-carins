@@ -20,6 +20,17 @@ jobs:
     with:
       install_command: 'npm install'
       use_auth_client_dev: true
+      # Release Wave の frontend↔backend compatibility edge を記録する。
+      # integration test を rust-alc-api コンテナ (docker-compose.test.yml の api
+      # サービス) 相手に回し、その image SHA を compat report として ci-dashboard に送る。
+      # compat machinery が test 前に backend SHA を解決し
+      # API_IMAGE=ghcr.io/ippoan/rust-alc-api:<sha> を export → その image で integration を回す。
+      has_integration: true
+      compat_backend_repo: 'ippoan/rust-alc-api'
+      compat_backend_image_env: 'API_IMAGE'
+      integration_test_command: 'npx vitest run tests/integration/'
+      integration_env: 'API_BASE_URL=http://localhost:18080'
+      cache_dependency_path: package-lock.json
       deploy_staging_script: |
         NITRO_PRESET=cloudflare_module \
         NUXT_PUBLIC_AUTH_WORKER_URL=${{ vars.STAGING_AUTH_WORKER_URL }} \
