@@ -29,7 +29,7 @@ function tenantHeaders(): Record<string, string> {
 async function waitForApi(maxRetries = 60): Promise<void> {
   for (let i = 0; i < maxRetries; i++) {
     try {
-      const res = await fetch(`${API_BASE}/health`)
+      const res = await fetch(`${API_BASE}/api/health`)
       if (res.ok) return
     } catch {
       // not ready yet
