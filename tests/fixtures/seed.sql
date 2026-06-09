@@ -26,7 +26,10 @@ INSERT INTO files (uuid, tenant_id, filename, type) VALUES
 
 -- ============================================================
 -- car_inspection_nfc_tags: 1 行。car_inspection_id=901 を参照。
--- /nfc-tags /nfc-tags/search?uuid=NFC-CARINS-001 が返す。
+-- nfc_uuid は backend (register_tag / search_by_uuid) が normalize_nfc_uuid
+-- (= 小文字化 + コロン除去) した形で保存・照合するため、シードも正規化済みの
+-- 形 (小文字・コロン無し) で投入する。test は正規化前の '04:A1:..' で引いて
+-- normalize ロジックも検証する。
 -- ============================================================
 INSERT INTO car_inspection_nfc_tags (tenant_id, nfc_uuid, car_inspection_id) VALUES
-  ('11111111-1111-1111-1111-111111111111', 'NFC-CARINS-001', 901);
+  ('11111111-1111-1111-1111-111111111111', '04a1b2c3d4e5f6', 901);

@@ -20,7 +20,10 @@ const TEST_TENANT_ID = '11111111-1111-1111-1111-111111111111'
 const SEED_CAR_INSPECTION_ID = 901
 const SEED_CAR_ID = 'CARINS-CAR-001'
 const SEED_FILE_UUID = 'bbbbbbbb-0001-0001-0001-bbbbbbbbbbbb'
-const SEED_NFC_UUID = 'NFC-CARINS-001'
+// backend が normalize (小文字化 + コロン除去) して保存する正規化済みの形
+const SEED_NFC_UUID = '04a1b2c3d4e5f6'
+// 正規化前の raw 形。search に渡すと normalize_nfc_uuid で SEED_NFC_UUID に一致する
+const SEARCH_NFC_RAW = '04:A1:B2:C3:D4:E5:F6'
 
 function tenantHeaders(): Record<string, string> {
   return { 'X-Tenant-ID': TEST_TENANT_ID }
@@ -94,8 +97,8 @@ describe.skipIf(!API_BASE)('carins ↔ rust-alc-api live integration', () => {
     expect(tags.some((t) => t.nfcUuid === SEED_NFC_UUID)).toBe(true)
   })
 
-  it('GET /api/nfc-tags/search?uuid= — NFC UUID から車検証を逆引き', async () => {
-    const url = `${API_BASE}/api/nfc-tags/search?uuid=${encodeURIComponent(SEED_NFC_UUID)}`
+  it('GET /api/nfc-tags/search?uuid= — NFC UUID から車検証を逆引き (normalize 経由)', async () => {
+    const url = `${API_BASE}/api/nfc-tags/search?uuid=${encodeURIComponent(SEARCH_NFC_RAW)}`
     const res = await fetch(url, { headers: tenantHeaders() })
     expect(res.status).toBe(200)
     const body = (await res.json()) as {
