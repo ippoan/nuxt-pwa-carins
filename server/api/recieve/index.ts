@@ -1,3 +1,4 @@
+import { extractTenantIdFromAuth } from '@ippoan/auth-client/server'
 /**
  * ファイル受信API（PWA share_target / ドロップゾーン用）
  * rust-alc-api REST 経由でファイルアップロード
@@ -25,11 +26,9 @@ export default defineEventHandler(async (event) => {
     const tokenMatch = cookieHeader.match(/logi_auth_token=([^;]+)/)
     if (tokenMatch) {
         headers['Authorization'] = `Bearer ${tokenMatch[1]}`
-        try {
-            const payload = JSON.parse(atob(tokenMatch[1].split('.')[1]))
-            const tenantId = payload.tenant_id || payload.org
-            if (tenantId) headers['X-Tenant-ID'] = tenantId
-        } catch { /* ignore */ }
+        // マルチバイト安全な lib decoder (parse 失敗時は tenantId undefined)
+        const { tenantId } = extractTenantIdFromAuth(`Bearer ${tokenMatch[1]}`)
+        if (tenantId) headers['X-Tenant-ID'] = tenantId
     }
     // 明示的な Authorization / X-Tenant-ID ヘッダーがあればそちらを優先
     const authHeader = getHeader(event, 'authorization')
