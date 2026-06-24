@@ -1,10 +1,19 @@
 import { extractTenantIdFromAuth } from '@ippoan/auth-client/server'
+import { requireAuth } from '../../utils/auth'
 /**
  * ファイル受信API（PWA share_target / ドロップゾーン用）
  * rust-alc-api REST 経由でファイルアップロード
+ *
+ * #290 Phase 4: アップロード前に requireAuth (auth-worker introspect) で署名 +
+ * APP_TENANT_ACL を検証する。share_target も browser JWT (logi_auth_token cookie)
+ * を unsigned decode して X-Tenant-ID 化しており proxy と同じ穴 (#290 穴 #3) を
+ * 持つため。introspect 通過後は cookie の tenant_id が検証済みになる。
  */
 
 export default defineEventHandler(async (event) => {
+    // 認証 gate (cookie/Bearer を introspect 検証)。body 読取前に弾く。
+    await requireAuth(event)
+
     const ap = await readMultipartFormData(event)
     if (ap == undefined) {
         console.log("ap undefined")

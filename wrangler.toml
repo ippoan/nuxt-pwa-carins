@@ -7,12 +7,16 @@ compatibility_flags = ["nodejs_compat"]
 main = "./.output/server/index.mjs"
 assets = { directory = "./.output/public/", binding = "ASSETS" }
 
-# frontend-ci.yml の secret-verify job が secret backup の auditability の
-# ため明示宣言を要求する。本 worker は wrangler secret を使わない (GCP SA
-# key 等は server runtime config 経由) ため、他 CF worker repo
-# (nuxt-notify / nuxt-trouble) に揃えて空配列を宣言する。
-[secrets]
-required = []
+# auth-worker POST /auth/introspect (#290 Phase 4) を叩くための共有 secret。
+# /api/proxy/* と /api/recieve の forward 前段で browser JWT を署名検証 +
+# APP_TENANT_ACL 判定するために使う (defense-in-depth)。auth-worker / cc-relay /
+# ref-files と同じ CF Secrets Store entry を物理共有。GCP cloudsql-sv に同名
+# secret が SoT として存在し frontend-ci の secret-verify が検証する
+# (test.yml で gcp_secret_verify_* 配線)。
+[[secrets_store_secrets]]
+binding = "INTERNAL_SHARED_SECRET"
+store_id = "bd7bc91a3e5f4111add4acf6cb4b8733"
+secret_name = "INTERNAL_SHARED_SECRET"
 
 [build]
 command = "npm run build"
@@ -36,6 +40,12 @@ NUXT_PUBLIC_API_BACKEND = "rust-alc-api"
 NUXT_PUBLIC_AUTH_WORKER_URL = "https://auth.ippoan.org"
 NUXT_ALC_API_URL = "https://rust-alc-api-747065218280.asia-northeast1.run.app"
 
+# named env は top-level binding を継承しないので再宣言する。
+[[env.preview.secrets_store_secrets]]
+binding = "INTERNAL_SHARED_SECRET"
+store_id = "bd7bc91a3e5f4111add4acf6cb4b8733"
+secret_name = "INTERNAL_SHARED_SECRET"
+
 [env.staging]
 name = "nuxt-pwa-carins-staging"
 
@@ -47,3 +57,9 @@ custom_domain = true
 NUXT_PUBLIC_API_BACKEND = "rust-alc-api"
 NUXT_PUBLIC_AUTH_WORKER_URL = "https://auth-staging.ippoan.org"
 NUXT_ALC_API_URL = "https://rust-alc-api-staging-566bls5vfq-an.a.run.app"
+
+# staging/prod 統合 entry なので同じ secret_name (auth-worker #189)。
+[[env.staging.secrets_store_secrets]]
+binding = "INTERNAL_SHARED_SECRET"
+store_id = "bd7bc91a3e5f4111add4acf6cb4b8733"
+secret_name = "INTERNAL_SHARED_SECRET"
