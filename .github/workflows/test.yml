@@ -20,6 +20,12 @@ jobs:
     with:
       install_command: 'npm install'
       use_auth_client_dev: true
+      # #290 Phase 4: wrangler.toml に INTERNAL_SHARED_SECRET の
+      # secrets_store_secrets binding を追加したので secret-verify が必須化する。
+      # GCP cloudsql-sv の同名 secret を WIF で検証 (ippoan org vars / secrets: inherit)。
+      gcp_secret_verify_project: ${{ vars.GCP_PROJECT_ID_STAGING }}
+      gcp_secret_verify_provider: ${{ vars.GCP_WIF_PROVIDER }}
+      gcp_secret_verify_sa: ${{ vars.GCP_WIF_SERVICE_ACCOUNT_STAGING }}
       # Release Wave の frontend↔backend compatibility edge を記録する。
       # integration test を rust-alc-api コンテナ (docker-compose.test.yml の api
       # サービス) 相手に回し、その image SHA を compat report として ci-dashboard に送る。
