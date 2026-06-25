@@ -18,6 +18,12 @@ binding = "INTERNAL_SHARED_SECRET"
 store_id = "bd7bc91a3e5f4111add4acf6cb4b8733"
 secret_name = "INTERNAL_SHARED_SECRET"
 
+# device-token 経路 (/api/device-upload, Phase 2 / smb-watch#1) の introspect を
+# 公開 HTTP ではなく CF service binding (worker-to-worker, 内部) で叩く。
+[[services]]
+binding = "AUTH_WORKER"
+service = "auth-worker"
+
 [build]
 command = "npm run build"
 
@@ -46,6 +52,10 @@ binding = "INTERNAL_SHARED_SECRET"
 store_id = "bd7bc91a3e5f4111add4acf6cb4b8733"
 secret_name = "INTERNAL_SHARED_SECRET"
 
+[[env.preview.services]]
+binding = "AUTH_WORKER"
+service = "auth-worker"
+
 [env.staging]
 name = "nuxt-pwa-carins-staging"
 
@@ -63,3 +73,7 @@ NUXT_ALC_API_URL = "https://rust-alc-api-staging-566bls5vfq-an.a.run.app"
 binding = "INTERNAL_SHARED_SECRET"
 store_id = "bd7bc91a3e5f4111add4acf6cb4b8733"
 secret_name = "INTERNAL_SHARED_SECRET"
+
+[[env.staging.services]]
+binding = "AUTH_WORKER"
+service = "auth-worker-staging"
