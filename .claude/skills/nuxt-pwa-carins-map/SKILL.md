@@ -1,6 +1,6 @@
 ---
 name: nuxt-pwa-carins-map
-generated-from: nuxt-pwa-carins:1ca7b9c58dd7f7080e6c475b2ab2d2acd8142d64
+generated-from: nuxt-pwa-carins:59fe80a7e819f8f90c1cc9a6a610ebbada0eb42b
 paths: [components/, composables/, pages/, server/]
 description: ippoan/nuxt-pwa-carins (車検証送信 Nuxt 3 PWA / Cloudflare Workers) の構造ナビゲーション。NFC で車検証 2D コードを読み取り rust-alc-api へ送る PWA。proxy/recieve server route・auth middleware・NFC composable の配置と wrangler prod/staging・既知の drift を 1 枚にまとめる。トリガー:「nuxt-pwa-carins」「車検証」「carins」「NFC 車検証」「share_target」「useNfcTag」「carins.ippoan.org」等。
 ---
@@ -31,7 +31,7 @@ Nuxt root (app/ ディレクトリは無く `pages/` `components/` `server/` が
 ## entrypoint
 
 - **nitro**: `nuxt.config.ts` → `nitro.preset = "cloudflare-module"`、`main = ./.output/server/index.mjs` (wrangler.toml)。
-- **REST proxy**: `/api/proxy/*` → `${alcApiUrl}/api/*`。JWT を Authorization で転送し、payload の `tenant_id`/`org` を `X-Tenant-ID` にフォールバック設定。
+- **REST proxy**: `/api/proxy/*` → auth-worker `/alc-proxy/*` → rust-alc-api `/api/*` (rust-alc-api#434 step 3 方式 B)。`@ippoan/auth-client/server` の **`createAuthWorkerProxyHandler`** で、browser JWT + `X-Alc-Proxy-Secret` (=INTERNAL_SHARED_SECRET、consumer proof) + `X-Alc-Proxy-Origin` を載せて **AUTH_WORKER service binding に thin-forward**。introspect / ACL / OIDC mint / X-Tenant-ID・X-User-* 注入は auth-worker 側に集約 (consumer は SA key を持たない)。INTERNAL_SHARED_SECRET / AUTH_WORKER 未設定は 503 (fail-closed)。
 - **share_target**: PWA manifest の `share_target.action = /api/recieve` (csv/json/pdf を POST 受信)。`file_handlers` で json/csv/pdf を直接開ける。
 - **wrangler**: top-level = prod (`nuxt-pwa-carins`, carins.ippoan.org)。`[env.staging]` = `nuxt-pwa-carins-staging` (carins-staging.ippoan.org)。`[env.preview]` あり。`NUXT_ALC_API_URL` / `NUXT_PUBLIC_AUTH_WORKER_URL` を env ごとに切替。
 
