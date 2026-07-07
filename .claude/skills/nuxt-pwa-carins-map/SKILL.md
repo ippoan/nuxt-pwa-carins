@@ -53,3 +53,35 @@ Nuxt root (app/ ディレクトリは無く `pages/` `components/` `server/` が
 - `auth-worker-map` — `@ippoan/auth-client` / logi_auth_token cookie の発行元
 - `nuxt-trouble-map` / `nuxt_dtako_logs-map` / `alc-app-map` — 同じ rust-alc-api consumer の兄弟 repo
 - `repo-map` / `cross-repo-symbol-index` — この map の運用方針 (generated-from 鮮度)
+
+## CLAUDE.md から移設 (2026-07-07)
+
+## アーキテクチャ
+
+### gRPC通信
+
+- **Connect RPC**: `@connectrpc/connect` + `@connectrpc/connect-web`でgrpc-web通信
+- **認証**: GCP IAM認証（サービスアカウントキーからIDトークン生成）
+- **Proto定義**: `@yhonda-ohishi-pub-dev/logi-proto`パッケージ
+
+### 主要ファイル
+
+| ファイル | 役割 |
+|---------|------|
+| `server/utils/grpc-client.ts` | Connect RPCクライアント生成 |
+| `server/utils/cloudrun-auth.ts` | GCP IAM認証・IDトークン取得 |
+| `server/api/grpc/car-inspections.ts` | 車検証API プロキシエンドポイント |
+| `server/api/grpc/files.ts` | ファイルAPI プロキシエンドポイント |
+| `composables/useCarInspectionData.ts` | 車検証データComposable |
+| `composables/useFilesData.ts` | ファイルデータComposable |
+
+### nuxt.config.ts 注意点
+
+- `build.transpile`に`@yhonda-ohishi-pub-dev/logi-proto`, `@bufbuild/protobuf`, `@connectrpc/connect`, `@connectrpc/connect-web`が必要（ESMモジュール解決のため）
+
+## 環境変数
+
+```env
+NUXT_CLOUDRUN_URL          # Cloud Run gRPCサービスURL
+NUXT_GCP_SERVICE_ACCOUNT_KEY  # GCPサービスアカウントキー（JSON）
+```
