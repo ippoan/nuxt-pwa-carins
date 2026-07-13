@@ -37,15 +37,23 @@ export default defineNuxtConfig({
     public: {
       apiBackend: 'rust-alc-api',
       authWorkerUrl: process.env.NUXT_PUBLIC_AUTH_WORKER_URL || '',
-      appVersion: process.env.NUXT_PUBLIC_APP_VERSION || 'dev',
+      appVersion: process.env.NUXT_PUBLIC_APP_VERSION || process.env.GITHUB_SHA || 'dev',
     },
   },
 
   vite: {
     // デプロイ版を JS バンドルに焼き込む (version-tag キャッシュバスト用、
-    // plugins/version-reload.client.ts が参照。Refs ippoan/auth-worker#379)
+    // plugins/version-reload.client.ts が参照。Refs ippoan/auth-worker#379)。
+    // build 版とサーバ版 (上の appVersion) は同じ式で解決する — deploy 経路
+    // (frontend-ci deploy_staging / preview 等) によって NUXT_PUBLIC_APP_VERSION
+    // を build に渡さない場合があり、その時は全 CI step に入る GITHUB_SHA に
+    // フォールバックする (--var で注入する github.sha と同一 40hex フォーマット)。
+    // 両版が必ず同値になるので spurious reload も dev フォールバックによる no-op
+    // も起きない。
     define: {
-      __APP_BUILD_VERSION__: JSON.stringify(process.env.NUXT_PUBLIC_APP_VERSION || 'dev'),
+      __APP_BUILD_VERSION__: JSON.stringify(
+        process.env.NUXT_PUBLIC_APP_VERSION || process.env.GITHUB_SHA || 'dev',
+      ),
     },
     server: {
       hmr: {
