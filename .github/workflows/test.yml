@@ -37,6 +37,9 @@ jobs:
       integration_test_command: 'npx vitest run tests/integration/'
       integration_env: 'API_BASE_URL=http://localhost:18080'
       cache_dependency_path: package-lock.json
+      # draft PR でも staging に deploy する (local-claude / Claude in Chrome での
+      # 実機検証を draft のまま回すため。既定は draft==false gate で未 deploy)。
+      deploy_staging_on_draft: true
       deploy_staging_script: |
         NITRO_PRESET=cloudflare_module \
         NUXT_PUBLIC_AUTH_WORKER_URL=${{ vars.STAGING_AUTH_WORKER_URL }} \
