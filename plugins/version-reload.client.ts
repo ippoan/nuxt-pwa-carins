@@ -20,6 +20,9 @@ export default defineNuxtPlugin(() => {
   // 版が取れない / dev ビルド / 既に一致 → 何もしない
   if (!build || !server || build === 'dev' || server === 'dev' || build === server) return
 
+  // 診断: 発火の直接証拠を残す (③ 検証・本番のキャッシュバスト観測用)
+  console.info('[version-reload] stale build detected', { build, server })
+
   // ループ防止: この server 版には既に 1 回 reload 済みなら二度としない
   const guardKey = `carins:freshreload:${server}`
   try {
@@ -44,6 +47,7 @@ export default defineNuxtPlugin(() => {
     } catch {
       // 破棄失敗でも reload は行う
     }
+    console.info('[version-reload] reloading to converge', { build, server })
     window.location.reload()
   }
   void nuke()
