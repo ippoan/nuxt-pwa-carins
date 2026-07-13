@@ -42,6 +42,11 @@ export default defineNuxtConfig({
   },
 
   vite: {
+    // デプロイ版を JS バンドルに焼き込む (version-tag キャッシュバスト用、
+    // plugins/version-reload.client.ts が参照。Refs ippoan/auth-worker#379)
+    define: {
+      __APP_BUILD_VERSION__: JSON.stringify(process.env.NUXT_PUBLIC_APP_VERSION || 'dev'),
+    },
     server: {
       hmr: {
         protocol: "wss",
