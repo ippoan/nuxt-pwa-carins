@@ -109,7 +109,10 @@ export default defineNuxtConfig({
 
   pwa: {
     client: { installPrompt: true },
-    registerType: "autoUpdate", // 多分なくてもよい
+    // ⚠️ TEMP (Refs #379 ③検証): version-reload plugin の発火を切り分けるため
+    // 一時的に "prompt" にして SW 自動更新を止める (autoUpdate が毎回先着して
+    // plugin が no-op になる問題の検証)。検証完了後に "autoUpdate" へ戻す。
+    registerType: "prompt", // TEMP: was "autoUpdate" — revert after #379 ③検証
 
     manifest: {
       name: appName,
