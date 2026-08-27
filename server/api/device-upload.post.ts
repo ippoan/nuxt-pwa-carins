@@ -1,5 +1,5 @@
-import type { H3Event } from 'h3'
 import { requireDeviceTenant } from '../utils/device-auth'
+import { cfEnv } from '../utils/cf-env'
 
 /**
  * device-token 専用ファイル受信 API (Phase 2 / ohishi-exp/smb-watch#1)。
@@ -18,10 +18,6 @@ import { requireDeviceTenant } from '../utils/device-auth'
  * introspect / ACL / OIDC mint / tenant 注入はすべて auth-worker に集約する
  * (#434 方式 B。読み取り経路の `server/api/proxy/[...path].ts` と同じ考え方)。
  */
-
-function cfEnv(event: H3Event): Record<string, unknown> {
-  return (event.context.cloudflare as { env?: Record<string, unknown> } | undefined)?.env ?? {}
-}
 
 export default defineEventHandler(async (event) => {
   // 認証 gate (Bearer device JWT を introspect 検証)。body 読取前に弾く。
