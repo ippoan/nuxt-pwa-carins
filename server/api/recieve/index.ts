@@ -1,14 +1,46 @@
-import { extractTenantIdFromAuth } from '@ippoan/auth-client/server'
-import { requireAuth } from '../../utils/auth'
 /**
  * ファイル受信API（PWA share_target / ドロップゾーン用）
- * rust-alc-api REST 経由でファイルアップロード
+ * /api/recieve → auth-worker /alc-proxy/api/files → rust-alc-api の POST /api/files
+ *
+ * #54: 2026-07 に rust-alc-api の Cloud Run が --no-allow-unauthenticated へ
+ * ロックダウンされ、Google 署名の OIDC ID token が無い呼び出しはプラットフォーム
+ * 層で 403 になった。本経路は cookie の browser JWT を Authorization に載せて
+ * rust-alc-api を直叩きしていたため (= OIDC ID token ではない)、アップロードが
+ * 全滅していた。読み取り経路 (/api/proxy/*) は #434 で auth-worker 集約済みだった
+ * ので、書き込みの本経路だけが移行から取り残されていた形。
+ *
+ * 方式は /api/proxy/* と同じ (方式 B): OIDC mint と identity 注入は
+ * auth-worker `/alc-proxy/*` に集約し、consumer は AUTH_WORKER service binding へ
+ * thin-forward するだけ。run.invoker の SA key は auth-worker にしか bind されて
+ * いないので、carins 側が自力で OIDC token を作ることはできない。
+ *
+ * consumer が付けるのは X-Alc-Proxy-Secret (= INTERNAL_SHARED_SECRET、consumer
+ * proof) + X-Alc-Proxy-Origin + browser JWT のみ。X-Tenant-ID / X-User-* は
+ * auth-worker が **検証済み JWT から注入する** ので consumer は載せない (#434)。
+ *
+ * INTERNAL_SHARED_SECRET は Secrets Store binding (.get()) のため route 側で
+ * resolve する。secret / AUTH_WORKER binding 未設定は fail-closed で 503。
  *
  * #290 Phase 4: アップロード前に requireAuth (auth-worker introspect) で署名 +
  * APP_TENANT_ACL を検証する。share_target も browser JWT (logi_auth_token cookie)
- * を unsigned decode して X-Tenant-ID 化しており proxy と同じ穴 (#290 穴 #3) を
- * 持つため。introspect 通過後は cookie の tenant_id が検証済みになる。
+ * を持つ人間の操作なので、machine 経路 (/api/device-upload) とは別に
+ * ユーザー経路の /alc-proxy を使う。
  */
+import type { H3Event } from 'h3'
+import { requireAuth } from '../../utils/auth'
+
+function cfEnv(event: H3Event): Record<string, unknown> {
+    return (event.context.cloudflare as { env?: Record<string, unknown> } | undefined)?.env ?? {}
+}
+
+/** Secrets Store binding (`.get()`) / 文字列 のいずれでも値を取り出す。 */
+async function resolveSecret(binding: unknown): Promise<string | null> {
+    if (typeof binding === 'string') return binding
+    if (binding && typeof (binding as { get?: unknown }).get === 'function') {
+        return (await (binding as { get(): Promise<string> }).get()) ?? null
+    }
+    return null
+}
 
 export default defineEventHandler(async (event) => {
     // 認証 gate (cookie/Bearer を introspect 検証)。body 読取前に弾く。
@@ -24,51 +56,93 @@ export default defineEventHandler(async (event) => {
     const multi = ap[0]
     console.log("multi:", multi.filename)
 
-    const config = useRuntimeConfig(event)
-    const backendUrl = config.alcApiUrl || 'https://rust-alc-api-747065218280.asia-northeast1.run.app'
+    const env = cfEnv(event)
+    const sharedSecret = await resolveSecret(env.INTERNAL_SHARED_SECRET)
+    if (!sharedSecret) {
+        throw createError({
+            statusCode: 503,
+            statusMessage: 'INTERNAL_SHARED_SECRET binding が未設定です',
+        })
+    }
+    const authWorker = env.AUTH_WORKER as { fetch: typeof fetch } | undefined
+    if (!authWorker) {
+        // 方式 B は AUTH_WORKER service binding 経由の forward が必須 (fail-closed)。
+        throw createError({
+            statusCode: 503,
+            statusMessage: 'AUTH_WORKER service binding が未設定です',
+        })
+    }
+    const authWorkerUrl =
+        typeof env.NUXT_PUBLIC_AUTH_WORKER_URL === 'string' && env.NUXT_PUBLIC_AUTH_WORKER_URL
+            ? env.NUXT_PUBLIC_AUTH_WORKER_URL
+            : 'https://auth.ippoan.org'
 
     const content = Buffer.from(multi.data).toString("base64")
 
-    // X-Tenant-ID を Cookie の JWT から取得（share_target はカスタムヘッダーなし）
-    const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+    // browser JWT は Cookie から取る（share_target はカスタムヘッダーなし）。
+    // 明示的な Authorization ヘッダーがあればそちらを優先。
     const cookieHeader = getHeader(event, 'cookie') || ''
     const tokenMatch = cookieHeader.match(/logi_auth_token=([^;]+)/)
-    if (tokenMatch) {
-        headers['Authorization'] = `Bearer ${tokenMatch[1]}`
-        // マルチバイト安全な lib decoder (parse 失敗時は tenantId undefined)
-        const { tenantId } = extractTenantIdFromAuth(`Bearer ${tokenMatch[1]}`)
-        if (tenantId) headers['X-Tenant-ID'] = tenantId
-    }
-    // 明示的な Authorization / X-Tenant-ID ヘッダーがあればそちらを優先
     const authHeader = getHeader(event, 'authorization')
-    if (authHeader) {
-        headers['Authorization'] = authHeader
-    }
-    const tenantHeader = getHeader(event, 'x-tenant-id')
-    if (tenantHeader) {
-        headers['X-Tenant-ID'] = tenantHeader
+    const cookieToken = authHeader
+        ? authHeader.replace(/^Bearer\s+/i, '')
+        : tokenMatch
+            ? tokenMatch[1]
+            : ''
+
+    const isFront = 1 in ap && ap[1].name == "from" && ap[1].data.toString() == "front"
+
+    if (!cookieToken) {
+        // /alc-proxy は browser JWT 必須。取れなければ forward せず失敗に倒す。
+        console.error("file upload failed: browser JWT (logi_auth_token) が取得できませんでした")
+        if (isFront) {
+            return { uuid: "", message: "失敗しました" }
+        }
+        await sendRedirect(event, "/?message=" + encodeURIComponent("失敗しました"), 302)
+        return
     }
 
     try {
-        const res: any = await $fetch(`${backendUrl}/api/files`, {
-            method: "post",
+        const res = await authWorker.fetch(`${authWorkerUrl}/alc-proxy/api/files`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                // consumer worker proof。auth-worker が constant-time で検証する。
+                'X-Alc-Proxy-Secret': sharedSecret,
+                // ACL 判定に使う app origin。
+                'X-Alc-Proxy-Origin': getRequestURL(event).origin,
+                // Cookie 由来の browser JWT。auth-worker がこれを検証して
+                // X-Tenant-ID / X-User-* を注入する。
+                // ★ X-Tenant-ID を consumer 側で載せてはいけない (#434 で塞いだ
+                //   client 由来 tenant 詐称の穴を開け直すことになる)。
+                Authorization: `Bearer ${cookieToken}`,
+            },
             body: JSON.stringify({
                 filename: multi.filename || "unnamed",
                 type: multi.type || "application/octet-stream",
                 content,
             }),
-            headers,
         })
-        console.log("file uploaded:", res?.uuid)
 
-        if (1 in ap && ap[1].name == "from" && ap[1].data.toString() == "front") {
-            return { uuid: res?.uuid || "", message: "送信完了しました" }
-        } else {
-            return { uuid: res?.uuid || "", message: "送信完了しました" }
+        if (!res.ok) {
+            // 切り分けのため status と body を必ず残す (502 としか出ないと
+            // 上流が 403 なのか 401 なのか分からず調査に時間を取られる)。
+            const body = await res.text().catch(() => '<body 読取失敗>')
+            console.error(`file upload failed: /alc-proxy/api/files ${res.status} ${res.statusText} body=${body}`)
+            if (isFront) {
+                return { uuid: "", message: "失敗しました" }
+            }
+            await sendRedirect(event, "/?message=" + encodeURIComponent("失敗しました"), 302)
+            return
         }
+
+        const json: any = await res.json().catch(() => null)
+        console.log("file uploaded:", json?.uuid)
+
+        return { uuid: json?.uuid || "", message: "送信完了しました" }
     } catch (e) {
         console.error("file upload failed:", e)
-        if (1 in ap && ap[1].name == "from" && ap[1].data.toString() == "front") {
+        if (isFront) {
             return { uuid: "", message: "失敗しました" }
         }
         await sendRedirect(event, "/?message=" + encodeURIComponent("失敗しました"), 302)
