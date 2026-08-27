@@ -1,5 +1,6 @@
 import type { H3Event } from 'h3'
 import { requireAuth as introspectRequireAuth } from '@ippoan/auth-client/server'
+import { cfEnv, resolveSecret } from './cf-env'
 
 // browser JWT (logi_auth_token cookie / Bearer) の検証を auth-worker
 // POST /auth/introspect に委譲する edge gate (ippoan/auth-worker#290 Phase 4)。
@@ -9,19 +10,6 @@ import { requireAuth as introspectRequireAuth } from '@ippoan/auth-client/server
 // unsigned decode で付与していた。偽造署名 / 別アプリの .ippoan.org 共有 cookie
 // が backend に届き得る穴 (#290 穴 #3) を、forward 前段で introspect を叩いて
 // 塞ぐ (署名 + APP_TENANT_ACL を auth-worker 側で検証)。
-
-/** Secrets Store binding (`.get()`) / 文字列 のいずれでも値を取り出す。 */
-async function resolveSecret(binding: unknown): Promise<string | null> {
-  if (typeof binding === 'string') return binding
-  if (binding && typeof (binding as { get?: unknown }).get === 'function') {
-    return (await (binding as { get(): Promise<string> }).get()) ?? null
-  }
-  return null
-}
-
-function cfEnv(event: H3Event): Record<string, unknown> {
-  return (event.context.cloudflare as { env?: Record<string, unknown> } | undefined)?.env ?? {}
-}
 
 /**
  * 保護経路の前段で呼ぶ introspect gate。INTERNAL_SHARED_SECRET で auth-worker の

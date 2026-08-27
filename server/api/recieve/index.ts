@@ -26,21 +26,8 @@
  * を持つ人間の操作なので、machine 経路 (/api/device-upload) とは別に
  * ユーザー経路の /alc-proxy を使う。
  */
-import type { H3Event } from 'h3'
 import { requireAuth } from '../../utils/auth'
-
-function cfEnv(event: H3Event): Record<string, unknown> {
-    return (event.context.cloudflare as { env?: Record<string, unknown> } | undefined)?.env ?? {}
-}
-
-/** Secrets Store binding (`.get()`) / 文字列 のいずれでも値を取り出す。 */
-async function resolveSecret(binding: unknown): Promise<string | null> {
-    if (typeof binding === 'string') return binding
-    if (binding && typeof (binding as { get?: unknown }).get === 'function') {
-        return (await (binding as { get(): Promise<string> }).get()) ?? null
-    }
-    return null
-}
+import { cfEnv, resolveSecret } from '../../utils/cf-env'
 
 export default defineEventHandler(async (event) => {
     // 認証 gate (cookie/Bearer を introspect 検証)。body 読取前に弾く。

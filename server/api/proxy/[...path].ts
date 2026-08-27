@@ -18,21 +18,8 @@
  * INTERNAL_SHARED_SECRET は Secrets Store binding (.get()) のため route 側で
  * resolve してから渡す。AUTH_WORKER service binding は方式 B では必須。
  */
-import type { H3Event } from 'h3'
 import { createAuthWorkerProxyHandler } from '@ippoan/auth-client/server'
-
-function cfEnv(event: H3Event): Record<string, unknown> {
-  return (event.context.cloudflare as { env?: Record<string, unknown> } | undefined)?.env ?? {}
-}
-
-/** Secrets Store binding (`.get()`) / 文字列 のいずれでも値を取り出す。 */
-async function resolveSecret(binding: unknown): Promise<string | null> {
-  if (typeof binding === 'string') return binding
-  if (binding && typeof (binding as { get?: unknown }).get === 'function') {
-    return (await (binding as { get(): Promise<string> }).get()) ?? null
-  }
-  return null
-}
+import { cfEnv, resolveSecret } from '../../utils/cf-env'
 
 export default defineEventHandler(async (event) => {
   const env = cfEnv(event)
