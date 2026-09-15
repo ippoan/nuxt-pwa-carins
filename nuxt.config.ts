@@ -5,6 +5,10 @@ console.log("env.PWA_TITLE",process.env.PWA_TITLE)
 console.log("env.NUXT_CF_SERVER",process.env.stage=="preview"?process.env.NUXT_CF_SERVER_PREVIEW:process.env.NUXT_CF_SERVER_PRODUCT)
 const appName=process.env.stage=="preview"?'ST車検証送信アプリ':'車検証送信アプリ'
 export default defineNuxtConfig({
+  // auth-client の SSR 認証状態 (opt-in、Refs ippoan/auth-worker#560)。
+  // server が cookie から認証の判定 (expiresAt / orgId / username) を決めて useState に載せる。
+  // payload に生 JWT は載らない。戻すときはこの 1 行を消す。
+  ippoanAuthClient: { authState: true },
   compatibilityDate: '2024-11-01',
   devtools: { enabled: true },
   // ssr: false,
