@@ -16,7 +16,7 @@ services:
       retries: 10
 
   # MinIO 公式 image (registry を問わず) が匿名 pull 不可になったため、
-  # 匿名 pull できる凍結アーカイブに差し替え (Refs #20-8)。旧 minio-init が作っていた
+  # 匿名 pull できる凍結アーカイブに差し替え (Refs ippoan/vein-match#20)。旧 minio-init が作っていた
   # test.pdf の事前配置は MINIO_DEFAULT_BUCKETS では出来ないが、tests/ 配下のどこからも
   # このオブジェクトは参照されていないため省略。
   minio:
