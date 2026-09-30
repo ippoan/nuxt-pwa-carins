@@ -24,6 +24,13 @@ secret_name = "INTERNAL_SHARED_SECRET"
 binding = "AUTH_WORKER"
 service = "auth-worker"
 
+# 「SMB から取り込む」ボタン (/api/smb-ingest/run) が smb-ingest Worker の POST /run を
+# 叩く service binding。prod のみ。preview / staging には宣言しない (そこでは 503 が正。
+# smb-ingest に staging は無い)。
+[[services]]
+binding = "SMB_INGEST"
+service = "smb-ingest"
+
 [build]
 command = "npm run build"
 

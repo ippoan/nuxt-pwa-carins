@@ -25,7 +25,10 @@
 
             <div v-if="data !== null" class="grid-row-3 mx-auto">
 
-                <UInput placeholder="Search..." v-model="q" />
+                <div class="flex items-center gap-2">
+                    <UInput class="flex-1" placeholder="Search..." v-model="q" />
+                    <UButton :loading="ingesting" @click="runSmbIngest">SMB から取り込む</UButton>
+                </div>
                 <div class="flex flex-wrap gap-x-3 gap-y-1 my-1">
                     <label v-for="col in AllColumns.filter(c => c.key !== 'actions')" :key="col.key"
                         class="flex items-center gap-1 text-xs cursor-pointer select-none">
@@ -145,6 +148,25 @@ function toHalfWidth(s: string): string {
 
 function makeSt(row: components["schemas"]["carInspectionSchema"]) {
     return row.TwodimensionCodeInfoValidPeriodExpirdate + "_" + row.TwodimensionCodeInfoEntryNoCarNo + "_" + row.ElectCertPublishdateE + row.ElectCertPublishdateY + "年" + ("00" + row.ElectCertPublishdateM).slice(-2) + "月" + ("00" + row.ElectCertPublishdateD).slice(-2) + "日発行"
+}
+
+const toast = useToast()
+const ingesting = ref(false)
+
+async function runSmbIngest() {
+    ingesting.value = true
+    try {
+        const res = await $fetch<{ status: 'accepted' | 'busy', dryRun?: boolean }>('/api/smb-ingest/run', { method: 'POST' })
+        toast.add({ title: res.status === 'accepted' && res.dryRun ? '取り込みを開始しました (dry-run)' : '取り込みを開始しました' })
+    } catch (e) {
+        const code = (e as { statusCode?: number, response?: { status?: number } }).statusCode
+            ?? (e as { response?: { status?: number } }).response?.status
+        toast.add(code === 409
+            ? { title: 'いま実行中です' }
+            : { title: '開始できませんでした', color: 'red' })
+    } finally {
+        ingesting.value = false
+    }
 }
 
 const serial = ref();
