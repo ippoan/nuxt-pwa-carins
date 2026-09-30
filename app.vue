@@ -12,6 +12,7 @@ const healthUrl = typeof authWorkerUrl === 'string' && authWorkerUrl ? `${authWo
     <NuxtLoadingIndicator />
     <Login />
     <NuxtPage />
+    <UNotifications />
     <!-- <NuxtRouteAnnouncer />
     <NuxtWelcome /> -->
     <VersionBadge :health-url="healthUrl" :frontend-version="appVersion" />

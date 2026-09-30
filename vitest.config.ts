@@ -13,7 +13,12 @@ export default defineVitestConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'json-summary', 'html'],
-      include: ['composables/**/*.ts', 'server/utils/auth-logic.ts', 'server/utils/proxy-logic.ts'],
+      include: [
+        'composables/**/*.ts',
+        'server/utils/auth-logic.ts',
+        'server/utils/proxy-logic.ts',
+        'server/utils/smb-ingest-logic.ts',
+      ],
       exclude: ['composables/useAuth.ts', 'composables/useApiBackend.ts'],
     },
   },
