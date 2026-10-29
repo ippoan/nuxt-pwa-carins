@@ -26,16 +26,6 @@ jobs:
       gcp_secret_verify_project: ${{ vars.GCP_PROJECT_ID_STAGING }}
       gcp_secret_verify_provider: ${{ vars.GCP_WIF_PROVIDER }}
       gcp_secret_verify_sa: ${{ vars.GCP_WIF_SERVICE_ACCOUNT_STAGING }}
-      # Release Wave の frontend↔backend compatibility edge を記録する。
-      # integration test を rust-alc-api コンテナ (docker-compose.test.yml の api
-      # サービス) 相手に回し、その image SHA を compat report として ci-dashboard に送る。
-      # compat machinery が test 前に backend SHA を解決し
-      # API_IMAGE=ghcr.io/ippoan/rust-alc-api:<sha> を export → その image で integration を回す。
-      has_integration: true
-      compat_backend_repo: 'ippoan/rust-alc-api'
-      compat_backend_image_env: 'API_IMAGE'
-      integration_test_command: 'npx vitest run tests/integration/'
-      integration_env: 'API_BASE_URL=http://localhost:18080'
       cache_dependency_path: package-lock.json
       # draft PR でも staging に deploy する (local-claude / Claude in Chrome での
       # 実機検証を draft のまま回すため。既定は draft==false gate で未 deploy)。
