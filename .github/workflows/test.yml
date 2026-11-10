@@ -18,6 +18,9 @@ jobs:
   ci:
     uses: ippoan/ci-workflows/.github/workflows/frontend-ci.yml@main
     with:
+      # staging deploy 後に、この frontend が実際に呼ぶ staging の CF Worker の SHA を tested として
+      # ci-dashboard に報告する (Refs ippoan/ci-dashboard#520)。呼ぶ証拠のある worker だけを並べる。
+      compat_staging_backends: 'ippoan/alc-carins-worker'
       install_command: 'npm install'
       use_auth_client_dev: true
       # #290 Phase 4: wrangler.toml に INTERNAL_SHARED_SECRET の
